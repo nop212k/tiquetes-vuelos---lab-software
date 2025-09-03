@@ -1,0 +1,30 @@
+.home-main {
+  background-image: url('/images/fonbusq1.jpg'); /* tu imagen */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  min-height: calc(100vh - 60px); /* ajusta según Navbar + Footer */
+  display: flex;
+  justify-content: center; /* centra verticalmente */
+  align-items: center;     /* centra horizontalmente */
+  padding: 2rem;
+}
+
+.form-container {
+  display: flex;
+  flex-direction: column; /* texto encima del formulario */
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.85);
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  width: 100%;
+  max-width: 500px;
+  height: 180px;
+}
+
+.form-container h2 {
+  text-align: center;
+  margin-bottom: 1rem;
+  color: #023e8a;
+}
