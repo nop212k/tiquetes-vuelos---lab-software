@@ -1,5 +1,5 @@
 .home-main {
-  background-image: url('/images/fonbusq1.jpg'); /* tu imagen */
+  background-image: url('/images/fonbusq2.jpg'); /* tu imagen */
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -19,12 +19,15 @@
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
   width: 100%;
-  max-width: 500px;
-  height: 180px;
+  max-width: 800px;
+  height: 165px;
 }
 
 .form-container h2 {
   text-align: center;
-  margin-bottom: 1rem;
+  margin-bottom: 0.2rem;
   color: #023e8a;
+  font-size: 2rem;       /* aumenta tamaño */
+  font-weight: 700;      /* negrita */
+  letter-spacing: 1px;   /* espaciado entre letras */
 }
