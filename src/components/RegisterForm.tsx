@@ -103,7 +103,7 @@ const RegisterForm: React.FC = () => {
         value={formData.tipoDocumento}
         onChange={handleChange}
         required
-        className="w-full p-2 border rounded"
+        className="w-full p-2 border rounded bg-white text-black"
       >
         <option value="">Tipo de Documento</option>
         <option value="CC">Cédula de Ciudadanía</option>
@@ -120,7 +120,7 @@ const RegisterForm: React.FC = () => {
         value={formData.documento}
         onChange={handleChange}
         required
-        className="w-full p-2 border rounded"
+        className="w-full p-2 border rounded bg-white text-black"
       />
 
       {/* Nombres */}
@@ -131,7 +131,7 @@ const RegisterForm: React.FC = () => {
         value={formData.nombres}
         onChange={handleChange}
         required
-        className="w-full p-2 border rounded"
+        className="w-full p-2 border rounded bg-white text-black"
       />
 
       {/* Apellidos */}
@@ -142,7 +142,7 @@ const RegisterForm: React.FC = () => {
         value={formData.apellidos}
         onChange={handleChange}
         required
-        className="w-full p-2 border rounded"
+        className="w-full p-2 border rounded bg-white text-black"
       />
 
       {/* Fecha de Nacimiento */}
@@ -154,7 +154,7 @@ const RegisterForm: React.FC = () => {
         min={minDate.toISOString().split("T")[0]}
         max={maxDate.toISOString().split("T")[0]}
         required
-        className="w-full p-2 border rounded"
+        className="w-full p-2 border rounded bg-white text-black"
       />
 
       {/* Lugar de Nacimiento */}
@@ -165,7 +165,7 @@ const RegisterForm: React.FC = () => {
         value={formData.lugarNacimiento}
         onChange={handleChange}
         required
-        className="w-full p-2 border rounded"
+        className="w-full p-2 border rounded bg-white text-black"
       />
 
       {/* Dirección */}
@@ -176,7 +176,7 @@ const RegisterForm: React.FC = () => {
         value={formData.direccion}
         onChange={handleChange}
         required
-        className="w-full p-2 border rounded"
+        className="w-full p-2 border rounded bg-white text-black"
       />
 
       {/* Género */}
@@ -185,7 +185,7 @@ const RegisterForm: React.FC = () => {
         value={formData.genero}
         onChange={handleChange}
         required
-        className="w-full p-2 border rounded"
+        className="w-full p-2 border rounded bg-white text-black"
       >
         <option value="">Selecciona tu género</option>
         <option value="M">Masculino</option>
@@ -201,7 +201,7 @@ const RegisterForm: React.FC = () => {
         value={formData.correo}
         onChange={handleChange}
         required
-        className="w-full p-2 border rounded"
+        className="w-full p-2 border rounded bg-white text-black"
       />
 
       {/* Usuario */}
@@ -212,55 +212,82 @@ const RegisterForm: React.FC = () => {
         value={formData.usuario}
         onChange={handleChange}
         required
-        className="w-full p-2 border rounded"
+        className="w-full p-2 border rounded bg-white text-black"
       />
 
       {/* Contraseña */}
-        <div>
+      <div>
         <input
-            type="password"
-            name="contrasena"
-            placeholder="Contraseña"
-            value={formData.contrasena}
-            onChange={handleChange}
-            required
-            className="w-full p-2 border rounded"
+          type="password"
+          name="contrasena"
+          placeholder="Contraseña"
+          value={formData.contrasena}
+          onChange={handleChange}
+          required
+          className="w-full p-2 border rounded bg-white text-black"
         />
 
         {/* Reglas dinámicas */}
         <ul className="mt-2 text-sm">
-            <li className={formData.contrasena.length >= 10 ? "text-green-600" : "text-red-500"}>
-            {formData.contrasena.length >= 10 ? "✅" : "❌"} Al menos 10 caracteres
-            </li>
-            <li className={/[A-Z]/.test(formData.contrasena) ? "text-green-600" : "text-red-500"}>
+          <li
+            className={
+              formData.contrasena.length >= 10
+                ? "text-green-600"
+                : "text-red-500"
+            }
+          >
+            {formData.contrasena.length >= 10 ? "✅" : "❌"} Al menos 10
+            caracteres
+          </li>
+          <li
+            className={
+              /[A-Z]/.test(formData.contrasena)
+                ? "text-green-600"
+                : "text-red-500"
+            }
+          >
             {/[A-Z]/.test(formData.contrasena) ? "✅" : "❌"} Una letra mayúscula
-            </li>
-            <li className={/[0-9]/.test(formData.contrasena) ? "text-green-600" : "text-red-500"}>
+          </li>
+          <li
+            className={
+              /[0-9]/.test(formData.contrasena)
+                ? "text-green-600"
+                : "text-red-500"
+            }
+          >
             {/[0-9]/.test(formData.contrasena) ? "✅" : "❌"} Un número
-            </li>
-            <li className={!/[^a-zA-Z0-9]/.test(formData.contrasena) ? "text-green-600" : "text-red-500"}>
-            {!/[^a-zA-Z0-9]/.test(formData.contrasena) ? "✅" : "❌"} Sin símbolos especiales
-            </li>
+          </li>
+          <li
+            className={
+              !/[^a-zA-Z0-9]/.test(formData.contrasena)
+                ? "text-green-600"
+                : "text-red-500"
+            }
+          >
+            {!/[^a-zA-Z0-9]/.test(formData.contrasena) ? "✅" : "❌"} Sin
+            símbolos especiales
+          </li>
         </ul>
-        </div>
+      </div>
 
-        {/* Repetir Contraseña */}
-        <div>
+      {/* Repetir Contraseña */}
+      <div>
         <input
-            type="password"
-            name="repetirContrasena"
-            placeholder="Repite la Contraseña"
-            value={formData.repetirContrasena}
-            onChange={handleChange}
-            required
-            className="w-full p-2 border rounded"
+          type="password"
+          name="repetirContrasena"
+          placeholder="Repite la Contraseña"
+          value={formData.repetirContrasena}
+          onChange={handleChange}
+          required
+          className="w-full p-2 border rounded bg-white text-black"
         />
         {formData.repetirContrasena &&
-            formData.contrasena !== formData.repetirContrasena && (
-            <p className="text-red-500 text-sm">❌ Las contraseñas no coinciden</p>
-        )}
-        </div>
-
+          formData.contrasena !== formData.repetirContrasena && (
+            <p className="text-red-500 text-sm">
+              ❌ Las contraseñas no coinciden
+            </p>
+          )}
+      </div>
 
       {/* Foto de Perfil (Opcional) */}
       <div>
@@ -272,7 +299,7 @@ const RegisterForm: React.FC = () => {
           name="foto"
           accept="image/*"
           onChange={handleChange}
-          className="w-full p-2 border rounded"
+          className="w-full p-2 border rounded bg-white text-black"
         />
       </div>
 

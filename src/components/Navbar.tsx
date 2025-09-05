@@ -25,10 +25,37 @@ const Navbar: React.FC = () => {
       {/* Botones a la derecha */}
       <div>
         <Link to="/login">
-          <button style={{ marginRight: '10px' }}>Ingresar</button>
+          <button style={{
+            marginRight: '10px',
+            backgroundColor: '#ffffff',
+            color: '#003b5e',
+            padding: '8px 16px',
+            borderRadius: '5px',
+            border: 'none',
+            cursor: 'pointer',
+            fontWeight: 'bold'
+          }}
+          onMouseOver={e => (e.currentTarget.style.backgroundColor = '#e0e0e0')}
+          onMouseOut={e => (e.currentTarget.style.backgroundColor = '#ffffff')}
+          >
+            Ingresar
+          </button>
         </Link>
         <Link to="/registro">
-          <button>Registro</button>
+          <button style={{
+            backgroundColor: '#ffffff',
+            color: '#003b5e',
+            padding: '8px 16px',
+            borderRadius: '5px',
+            border: 'none',
+            cursor: 'pointer',
+            fontWeight: 'bold'
+          }}
+          onMouseOver={e => (e.currentTarget.style.backgroundColor = '#e0e0e0')}
+          onMouseOut={e => (e.currentTarget.style.backgroundColor = '#ffffff')}
+          >
+            Registro
+          </button>
         </Link>
       </div>
     </nav>

@@ -24,11 +24,9 @@ const SearchForm: React.FC = () => {
   const [destination, setDestination] = useState('');
   const [date, setDate] = useState('');
 
-  // Fecha mínima = hoy
   const today = new Date();
   const minDate = today.toISOString().split("T")[0];
 
-  // Fecha máxima = hoy + 2 años
   const twoYearsLater = new Date();
   twoYearsLater.setFullYear(today.getFullYear() + 2);
   const maxDate = twoYearsLater.toISOString().split("T")[0];
@@ -36,7 +34,6 @@ const SearchForm: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log({ origin, destination, date });
-    // Aquí luego conectaremos con backend
   };
 
   return (
@@ -61,12 +58,14 @@ const SearchForm: React.FC = () => {
           fontSize: "1rem",
           borderRadius: "10px",
           border: "1px solid #ccc",
-          minWidth: "180px"
+          minWidth: "180px",
+          backgroundColor: "#ffffff",
+          color: "#000000"
         }}
       >
         <option value="">Selecciona origen</option>
         {originCities
-          .filter(city => city !== destination) // evita que coincidan
+          .filter(city => city !== destination)
           .map(city => (
             <option key={city} value={city}>{city}</option>
         ))}
@@ -81,12 +80,14 @@ const SearchForm: React.FC = () => {
           fontSize: "1rem",
           borderRadius: "10px",
           border: "1px solid #ccc",
-          minWidth: "180px"
+          minWidth: "180px",
+          backgroundColor: "#ffffff",
+          color: "#000000"
         }}
       >
         <option value="">Selecciona destino</option>
         {destinationCities
-          .filter(city => city !== origin) // evita repetir origen
+          .filter(city => city !== origin)
           .map(city => (
             <option key={city} value={city}>{city}</option>
         ))}
@@ -103,7 +104,9 @@ const SearchForm: React.FC = () => {
           padding: "0.8rem 1rem",
           fontSize: "1rem",
           borderRadius: "10px",
-          border: "1px solid #ccc"
+          border: "1px solid #ccc",
+          backgroundColor: "#ffffff",
+          color: "#000000"
         }}
       />
 
@@ -115,11 +118,13 @@ const SearchForm: React.FC = () => {
           fontSize: "1rem",
           borderRadius: "10px",
           border: "none",
-          backgroundColor: "#2563eb", // azul
+          backgroundColor: "#003b5e",
           color: "white",
           fontWeight: "bold",
           cursor: "pointer"
         }}
+        onMouseOver={e => (e.currentTarget.style.backgroundColor = '#005f8a')}
+        onMouseOut={e => (e.currentTarget.style.backgroundColor = '#003b5e')}
       >
         Buscar
       </button>
