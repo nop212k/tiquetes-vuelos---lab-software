@@ -14,6 +14,8 @@ app.use(express.json());
 
 // Rutas
 app.use('/api/users', userRoutes);
+app.use("/uploads", express.static("uploads"));
+
 
 // Inicializar DB y servidor
 AppDataSource.initialize()

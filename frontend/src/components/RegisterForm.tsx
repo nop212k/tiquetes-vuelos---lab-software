@@ -1,6 +1,9 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const RegisterForm: React.FC = () => {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     tipoDocumento: "",
     documento: "",
@@ -19,11 +22,9 @@ const RegisterForm: React.FC = () => {
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  // Fechas mínimas y máximas
   const today = new Date();
   const minDate = new Date();
   minDate.setFullYear(today.getFullYear() - 70);
-
   const maxDate = new Date();
   maxDate.setFullYear(today.getFullYear() - 18);
 
@@ -35,47 +36,66 @@ const RegisterForm: React.FC = () => {
       ...formData,
       [name]: files ? files[0] : value,
     });
+
+    // Validación en tiempo real
+    let errorMsg = "";
+    if (name === "nombres" || name === "apellidos" || name === "lugarNacimiento") {
+      if (!/^[a-zA-ZÀ-ÿ\s]+$/.test(value)) {
+        errorMsg = "Solo se permiten letras y espacios.";
+      }
+    }
+    if (name === "documento") {
+        if (!/^\d{8,10}$/.test(value)) {
+            errorMsg = "La cédula debe tener entre 8 y 10 dígitos.";
+      }
+    }
+    if (name === "contrasena") {
+      if (value.length < 10) errorMsg = "Mínimo 10 caracteres.";
+      else if (!/[A-Z]/.test(value)) errorMsg = "Debe tener al menos una mayúscula.";
+      else if (!/[0-9]/.test(value)) errorMsg = "Debe tener al menos un número.";
+      else if (/[^a-zA-Z0-9]/.test(value)) errorMsg = "No se permiten símbolos.";
+    }
+    if (name === "repetirContrasena") {
+      if (value !== formData.contrasena) errorMsg = "Las contraseñas no coinciden.";
+    }
+
+    setErrors((prev) => ({ ...prev, [name]: errorMsg }));
   };
 
-  // Validaciones de contraseña
-  const validatePassword = (password: string): string => {
-    if (password.length < 10) {
-      return "La contraseña debe tener al menos 10 caracteres.";
-    }
-    if (!/[A-Z]/.test(password)) {
-      return "La contraseña debe contener al menos una letra mayúscula.";
-    }
-    if (!/[0-9]/.test(password)) {
-      return "La contraseña debe contener al menos un número.";
-    }
-    if (/[^a-zA-Z0-9]/.test(password)) {
-      return "La contraseña no debe contener símbolos especiales.";
-    }
-    return "";
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validar contraseña
-    const passwordError = validatePassword(formData.contrasena);
-    if (passwordError) {
-      setErrors({ contrasena: passwordError });
+    // Verificar errores antes de enviar
+    const hasErrors = Object.values(errors).some((err) => err.length > 0);
+    if (hasErrors) {
+      alert("Corrige los errores antes de enviar.");
       return;
     }
 
-    // Confirmar contraseñas
-    if (formData.contrasena !== formData.repetirContrasena) {
-      setErrors({ repetirContrasena: "Las contraseñas no coinciden." });
-      return;
-    }
+    // FormData para enviar archivos
+    const data = new FormData();
+    Object.entries(formData).forEach(([key, value]) => {
+      if (value !== null) data.append(key, value as string | Blob);
+    });
 
-    setErrors({});
-    console.log("Datos del formulario:", formData);
-    alert("Registro exitoso ✅");
+    try {
+      const res = await fetch("http://localhost:8000/api/users/register", {
+        method: "POST",
+        body: data,
+      });
+
+      if (!res.ok) throw new Error("Error en el registro");
+      const responseData = await res.json();
+      console.log("Registro exitoso:", responseData);
+      alert("✅ Registro exitoso");
+      navigate("/login");
+    } catch (err) {
+      console.error(err);
+      alert("❌ Error al registrar usuario");
+    }
   };
 
-  // Verificar si todos los campos obligatorios están completos
+  // Validación general para habilitar botón
   const isFormValid =
     formData.tipoDocumento &&
     formData.documento &&
@@ -89,228 +109,147 @@ const RegisterForm: React.FC = () => {
     formData.usuario &&
     formData.contrasena &&
     formData.repetirContrasena &&
-    !validatePassword(formData.contrasena) &&
-    formData.contrasena === formData.repetirContrasena;
+    Object.values(errors).every((err) => err === "");
 
   return (
     <form
       onSubmit={handleSubmit}
       className="bg-white text-black rounded-lg p-6 w-full max-w-md shadow-lg flex flex-col space-y-4"
     >
-      {/* Tipo de Documento */}
       <select
         name="tipoDocumento"
         value={formData.tipoDocumento}
         onChange={handleChange}
-        required
-        className="w-full p-2 border rounded bg-white text-black"
+        className="border p-2 rounded"
       >
-        <option value="">Tipo de Documento</option>
-        <option value="CC">Cédula de Ciudadanía</option>
+        <option value="">Tipo de documento</option>
+        <option value="CC">Cédula</option>
         <option value="TI">Tarjeta de Identidad</option>
         <option value="CE">Cédula de Extranjería</option>
-        <option value="PP">Pasaporte</option>
       </select>
 
-      {/* Documento */}
       <input
         type="text"
         name="documento"
-        placeholder="Número de Documento"
+        placeholder="Número de documento"
         value={formData.documento}
         onChange={handleChange}
-        required
-        className="w-full p-2 border rounded bg-white text-black"
+        className="border p-2 rounded"
       />
+      {errors.documento && <p className="text-red-500 text-sm">{errors.documento}</p>}
 
-      {/* Nombres */}
       <input
         type="text"
         name="nombres"
         placeholder="Nombres"
         value={formData.nombres}
         onChange={handleChange}
-        required
-        className="w-full p-2 border rounded bg-white text-black"
+        className="border p-2 rounded"
       />
+      {errors.nombres && <p className="text-red-500 text-sm">{errors.nombres}</p>}
 
-      {/* Apellidos */}
       <input
         type="text"
         name="apellidos"
         placeholder="Apellidos"
         value={formData.apellidos}
         onChange={handleChange}
-        required
-        className="w-full p-2 border rounded bg-white text-black"
+        className="border p-2 rounded"
       />
+      {errors.apellidos && <p className="text-red-500 text-sm">{errors.apellidos}</p>}
 
-      {/* Fecha de Nacimiento */}
       <input
         type="date"
         name="fechaNacimiento"
-        value={formData.fechaNacimiento}
-        onChange={handleChange}
         min={minDate.toISOString().split("T")[0]}
         max={maxDate.toISOString().split("T")[0]}
-        required
-        className="w-full p-2 border rounded bg-white text-black"
+        value={formData.fechaNacimiento}
+        onChange={handleChange}
+        className="border p-2 rounded"
       />
 
-      {/* Lugar de Nacimiento */}
       <input
         type="text"
         name="lugarNacimiento"
-        placeholder="Lugar de Nacimiento (Ciudad, País)"
+        placeholder="Lugar de nacimiento"
         value={formData.lugarNacimiento}
         onChange={handleChange}
-        required
-        className="w-full p-2 border rounded bg-white text-black"
+        className="border p-2 rounded"
       />
+      {errors.lugarNacimiento && <p className="text-red-500 text-sm">{errors.lugarNacimiento}</p>}
 
-      {/* Dirección */}
       <input
         type="text"
         name="direccion"
-        placeholder="Dirección de Facturación"
+        placeholder="Dirección"
         value={formData.direccion}
         onChange={handleChange}
-        required
-        className="w-full p-2 border rounded bg-white text-black"
+        className="border p-2 rounded"
       />
 
-      {/* Género */}
       <select
         name="genero"
         value={formData.genero}
         onChange={handleChange}
-        required
-        className="w-full p-2 border rounded bg-white text-black"
+        className="border p-2 rounded"
       >
-        <option value="">Selecciona tu género</option>
+        <option value="">Género</option>
         <option value="M">Masculino</option>
         <option value="F">Femenino</option>
         <option value="O">Otro</option>
       </select>
 
-      {/* Correo */}
       <input
         type="email"
         name="correo"
-        placeholder="Correo Electrónico"
+        placeholder="Correo electrónico"
         value={formData.correo}
         onChange={handleChange}
-        required
-        className="w-full p-2 border rounded bg-white text-black"
+        className="border p-2 rounded"
       />
 
-      {/* Usuario */}
       <input
         type="text"
         name="usuario"
-        placeholder="Nombre de Usuario"
+        placeholder="Usuario"
         value={formData.usuario}
         onChange={handleChange}
-        required
-        className="w-full p-2 border rounded bg-white text-black"
+        className="border p-2 rounded"
       />
 
-      {/* Contraseña */}
-      <div>
-        <input
-          type="password"
-          name="contrasena"
-          placeholder="Contraseña"
-          value={formData.contrasena}
-          onChange={handleChange}
-          required
-          className="w-full p-2 border rounded bg-white text-black"
-        />
+      <input
+        type="password"
+        name="contrasena"
+        placeholder="Contraseña"
+        value={formData.contrasena}
+        onChange={handleChange}
+        className="border p-2 rounded"
+      />
+      {errors.contrasena && <p className="text-red-500 text-sm">{errors.contrasena}</p>}
 
-        {/* Reglas dinámicas */}
-        <ul className="mt-2 text-sm">
-          <li
-            className={
-              formData.contrasena.length >= 10
-                ? "text-green-600"
-                : "text-red-500"
-            }
-          >
-            {formData.contrasena.length >= 10 ? "✅" : "❌"} Al menos 10
-            caracteres
-          </li>
-          <li
-            className={
-              /[A-Z]/.test(formData.contrasena)
-                ? "text-green-600"
-                : "text-red-500"
-            }
-          >
-            {/[A-Z]/.test(formData.contrasena) ? "✅" : "❌"} Una letra mayúscula
-          </li>
-          <li
-            className={
-              /[0-9]/.test(formData.contrasena)
-                ? "text-green-600"
-                : "text-red-500"
-            }
-          >
-            {/[0-9]/.test(formData.contrasena) ? "✅" : "❌"} Un número
-          </li>
-          <li
-            className={
-              !/[^a-zA-Z0-9]/.test(formData.contrasena)
-                ? "text-green-600"
-                : "text-red-500"
-            }
-          >
-            {!/[^a-zA-Z0-9]/.test(formData.contrasena) ? "✅" : "❌"} Sin
-            símbolos especiales
-          </li>
-        </ul>
-      </div>
+      <input
+        type="password"
+        name="repetirContrasena"
+        placeholder="Repetir contraseña"
+        value={formData.repetirContrasena}
+        onChange={handleChange}
+        className="border p-2 rounded"
+      />
+      {errors.repetirContrasena && <p className="text-red-500 text-sm">{errors.repetirContrasena}</p>}
 
-      {/* Repetir Contraseña */}
-      <div>
-        <input
-          type="password"
-          name="repetirContrasena"
-          placeholder="Repite la Contraseña"
-          value={formData.repetirContrasena}
-          onChange={handleChange}
-          required
-          className="w-full p-2 border rounded bg-white text-black"
-        />
-        {formData.repetirContrasena &&
-          formData.contrasena !== formData.repetirContrasena && (
-            <p className="text-red-500 text-sm">
-              ❌ Las contraseñas no coinciden
-            </p>
-          )}
-      </div>
+      <input
+        type="file"
+        name="foto"
+        accept="image/*"
+        onChange={handleChange}
+        className="border p-2 rounded"
+      />
 
-      {/* Foto de Perfil (Opcional) */}
-      <div>
-        <label className="block mb-1 text-sm text-gray-700">
-          Foto de Perfil (opcional)
-        </label>
-        <input
-          type="file"
-          name="foto"
-          accept="image/*"
-          onChange={handleChange}
-          className="w-full p-2 border rounded bg-white text-black"
-        />
-      </div>
-
-      {/* Botón */}
       <button
         type="submit"
         disabled={!isFormValid}
-        className={`w-full p-2 rounded text-white ${
-          isFormValid
-            ? "bg-[#003b5e] hover:bg-[#005f8a]"
-            : "bg-gray-400 cursor-not-allowed"
+        className={`p-2 rounded text-white ${
+          isFormValid ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-400 cursor-not-allowed"
         }`}
       >
         Registrarse
