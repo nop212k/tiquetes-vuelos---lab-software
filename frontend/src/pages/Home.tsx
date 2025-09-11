@@ -1,4 +1,3 @@
-// src/pages/Home.tsx
 import React from 'react';
 import Navbar from '../components/Navbar';
 import SearchForm from '../components/SearchForm';
@@ -10,6 +9,7 @@ const Home: React.FC = () => {
     <div>
       <Navbar />
       <main className="home-main">
+        <h1 className="banner-text">VUELA ALTO, VUELA CON PEARL AIRLINES!</h1>
         <div className="form-container">
           <h2>Busca tus vuelos</h2>      {/* texto encima del formulario */}
           <SearchForm />                  {/* formulario */}

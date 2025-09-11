@@ -8,6 +8,7 @@
   justify-content: center; /* centra verticalmente */
   align-items: center;     /* centra horizontalmente */
   padding: 2rem;
+  position: relative; /* Necesario para posicionamiento absoluto del texto */
 }
 
 .form-container {
@@ -21,6 +22,7 @@
   width: 100%;
   max-width: 800px;
   height: 165px;
+  z-index: 1; /* Asegura que el formulario esté por encima del texto */
 }
 
 .form-container h2 {
@@ -31,3 +33,37 @@
   font-weight: 700;      /* negrita */
   letter-spacing: 1px;   /* espaciado entre letras */
 }
+
+.banner-text {
+  position: absolute;
+  top: 20%; /* Ajusta la posición vertical (puedes cambiarlo, por ejemplo, a 10% o 30%) */
+  left: 50%;
+  transform: translateX(-50%); /* Centra horizontalmente */
+  font-size: 4em; /* Texto grande y llamativo */
+  font-weight: 900; /* Negrita extrema */
+  color: #ffffff; /* Negro puro */
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* Sombra para legibilidad */
+  text-align: center;
+  width: 100%;
+  z-index: 0; /* Debajo del .form-container */
+  padding: 0 1rem;
+  font-family: 'Arial Black', sans-serif; /* Fuente llamativa */
+  overflow: hidden; /* Oculta el texto que excede durante la animación */
+  white-space: nowrap; /* Evita saltos de línea */
+  border-right: 0.15em solid #000000; /* Cursor parpadeante */
+  animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite; /* Animaciones */
+}
+
+@keyframes typing {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@keyframes blink-caret {
+  from, to { border-color: transparent; }
+  50% { border-color: #000000; }
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
