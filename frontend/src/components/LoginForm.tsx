@@ -59,15 +59,15 @@ const LoginForm: React.FC = () => {
         placeholder="Correo o usuario"
         value={formData.login}
         onChange={handleChange}
-        className="border p-2 rounded text-black"
+        className="border p-2 rounded text-black bg-white"
       />
       <input
-        type="text"
+        type="password"
         name="password"
         placeholder="Contraseña"
         value={formData.password}
         onChange={handleChange}
-        className="border p-2 rounded text-black"
+        className="border p-2 rounded text-black bg-white"
       />
       {error && <p className="text-red-500 text-sm">{error}</p>}
       <button type="submit" className="bg-blue-600 text-white p-2 rounded hover:bg-blue-700">
@@ -76,12 +76,8 @@ const LoginForm: React.FC = () => {
 
       {/* Link de olvidar contraseña */}
       <div className="text-center">
-        <Link
-          to="/forgot-password" // 👈 ruta futura
-          className="text-sm text-blue-300 hover:text-blue-500"
-        >
-          ¿Olvidaste tu contraseña?
-        </Link>
+        <Link to="/forgot-password" className="text-sm text-blue-300 hover:text-blue-500">
+        ¿Olvidaste tu contraseña?</Link>
       </div>
     </form>
   );

@@ -120,7 +120,7 @@ const RegisterForm: React.FC = () => {
         name="tipoDocumento"
         value={formData.tipoDocumento}
         onChange={handleChange}
-        className="border p-2 rounded"
+        className="border p-2 rounded bg-white"
       >
         <option value="">Tipo de documento</option>
         <option value="CC">Cédula</option>
@@ -134,7 +134,7 @@ const RegisterForm: React.FC = () => {
         placeholder="Número de documento"
         value={formData.documento}
         onChange={handleChange}
-        className="border p-2 rounded"
+        className="border p-2 rounded bg-white"
       />
       {errors.documento && <p className="text-red-500 text-sm">{errors.documento}</p>}
 
@@ -144,7 +144,7 @@ const RegisterForm: React.FC = () => {
         placeholder="Nombres"
         value={formData.nombres}
         onChange={handleChange}
-        className="border p-2 rounded"
+        className="border p-2 rounded bg-white"
       />
       {errors.nombres && <p className="text-red-500 text-sm">{errors.nombres}</p>}
 
@@ -154,7 +154,7 @@ const RegisterForm: React.FC = () => {
         placeholder="Apellidos"
         value={formData.apellidos}
         onChange={handleChange}
-        className="border p-2 rounded"
+        className="border p-2 rounded bg-white"
       />
       {errors.apellidos && <p className="text-red-500 text-sm">{errors.apellidos}</p>}
 
@@ -165,7 +165,7 @@ const RegisterForm: React.FC = () => {
         max={maxDate.toISOString().split("T")[0]}
         value={formData.fechaNacimiento}
         onChange={handleChange}
-        className="border p-2 rounded"
+        className="border p-2 rounded bg-white"
       />
 
       <input
@@ -174,7 +174,7 @@ const RegisterForm: React.FC = () => {
         placeholder="Lugar de nacimiento"
         value={formData.lugarNacimiento}
         onChange={handleChange}
-        className="border p-2 rounded"
+        className="border p-2 rounded bg-white"
       />
       {errors.lugarNacimiento && <p className="text-red-500 text-sm">{errors.lugarNacimiento}</p>}
 
@@ -184,14 +184,14 @@ const RegisterForm: React.FC = () => {
         placeholder="Dirección"
         value={formData.direccion}
         onChange={handleChange}
-        className="border p-2 rounded"
+        className="border p-2 rounded bg-white"
       />
 
       <select
         name="genero"
         value={formData.genero}
         onChange={handleChange}
-        className="border p-2 rounded"
+        className="border p-2 rounded bg-white"
       >
         <option value="">Género</option>
         <option value="M">Masculino</option>
@@ -205,7 +205,7 @@ const RegisterForm: React.FC = () => {
         placeholder="Correo electrónico"
         value={formData.correo}
         onChange={handleChange}
-        className="border p-2 rounded"
+        className="border p-2 rounded bg-white"
       />
 
       <input
@@ -214,7 +214,7 @@ const RegisterForm: React.FC = () => {
         placeholder="Usuario"
         value={formData.usuario}
         onChange={handleChange}
-        className="border p-2 rounded"
+        className="border p-2 rounded bg-white"
       />
 
       <input
@@ -223,7 +223,7 @@ const RegisterForm: React.FC = () => {
         placeholder="Contraseña"
         value={formData.contrasena}
         onChange={handleChange}
-        className="border p-2 rounded"
+        className="border p-2 rounded bg-white"
       />
       {errors.contrasena && <p className="text-red-500 text-sm">{errors.contrasena}</p>}
 
@@ -233,7 +233,7 @@ const RegisterForm: React.FC = () => {
         placeholder="Repetir contraseña"
         value={formData.repetirContrasena}
         onChange={handleChange}
-        className="border p-2 rounded"
+        className="border p-2 rounded bg-white"
       />
       {errors.repetirContrasena && <p className="text-red-500 text-sm">{errors.repetirContrasena}</p>}
 
@@ -242,7 +242,7 @@ const RegisterForm: React.FC = () => {
         name="foto"
         accept="image/*"
         onChange={handleChange}
-        className="border p-2 rounded"
+        className="border p-2 rounded bg-white"
       />
 
       <button
