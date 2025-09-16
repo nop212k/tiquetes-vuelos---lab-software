@@ -5,6 +5,7 @@ import RegisterPage from "./pages/Registro";
 import LoginPage from "./pages/Login";
 import Cliente from "./pages/Cliente";
 import Root from "./pages/Root"; 
+import Admin from "./pages/Admin";
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Route path="/login" element={<LoginPage />}/>
         <Route path="/cliente" element={<Cliente />} />
         <Route path="/root" element={<Root />} />
+        <Route path="/admin" element={<Admin />} />
       </Routes>
     </Router>
   );
