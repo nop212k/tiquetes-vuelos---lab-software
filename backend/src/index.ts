@@ -5,6 +5,8 @@ import cors from 'cors';
 import { AppDataSource } from './config/data-source';
 import userRoutes from './routes/userRoutes';
 import authRoutes from './routes/authRoutes';
+import rootRoutes from "./routes/rootRoutes";
+
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -17,6 +19,7 @@ app.use(express.json());
 app.use('/api/users', userRoutes);
 app.use('/api', authRoutes);
 app.use("/uploads", express.static("uploads"));
+app.use("/api", rootRoutes);
 
 
 // Inicializar DB y servidor
