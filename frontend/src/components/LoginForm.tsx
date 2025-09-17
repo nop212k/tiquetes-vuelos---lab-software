@@ -40,7 +40,7 @@ const LoginForm: React.FC = () => {
         // Redirigir según tipo de usuario
         if (data.tipoUsuario === "cliente") {
             navigate("/cliente");
-        } else if (data.tipoUsuario === "administrador") {
+        } else if (data.tipoUsuario === "admin") {
             navigate("/admin");
         } else if (data.tipoUsuario === "root") {
             navigate("/root");

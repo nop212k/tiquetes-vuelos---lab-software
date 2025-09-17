@@ -1,5 +1,5 @@
 .home-main {
-  background-image: url('/images/fonbusq2.jpg'); /* tu imagen */
+  background-image: url('/images/fondoHome.png'); /* tu imagen */
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -12,6 +12,8 @@
 }
 
 .form-container {
+  position: relative;         /* asegura que z-index funcione */
+  top: 140px;
   display: flex;
   flex-direction: column; /* texto encima del formulario */
   align-items: center;
@@ -36,10 +38,10 @@
 
 .banner-text {
   position: absolute;
-  top: 20%; /* Ajusta la posición vertical (puedes cambiarlo, por ejemplo, a 10% o 30%) */
+  top: 15%; /* Ajusta la posición vertical (puedes cambiarlo, por ejemplo, a 10% o 30%) */
   left: 50%;
   transform: translateX(-50%); /* Centra horizontalmente */
-  font-size: 3em; /* Texto grande y llamativo */
+  font-size: 2em; /* Texto grande y llamativo */
   font-weight: 900; /* Negrita extrema */
   color: #ffffff; /* Negro puro */
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* Sombra para legibilidad */
