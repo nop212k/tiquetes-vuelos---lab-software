@@ -50,6 +50,7 @@ export class Vuelo {
     default: () => 'CURRENT_TIMESTAMP',
   })
   creadoEn: Date;
+  
 
   @UpdateDateColumn({
     name: 'actualizado_en',
