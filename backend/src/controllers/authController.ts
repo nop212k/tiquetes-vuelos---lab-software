@@ -1,3 +1,4 @@
+// backend/src/controllers/authController.ts
 import { Request, Response } from "express";
 import { AppDataSource } from "../config/data-source";
 import { User } from "../models/User";
@@ -5,49 +6,51 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
 export const loginUser = async (req: Request, res: Response) => {
-  const { login, password } = req.body; // login puede ser correo o usuario
-
-  if (!login || !password) {
-    return res.status(400).json({ message: "Debe enviar login y contraseña" });
-  }
+  const { login, password } = req.body;
+  if (!login || !password) return res.status(400).json({ message: "Debe enviar login y contraseña" });
 
   try {
     const userRepository = AppDataSource.getRepository(User);
 
-    // Buscar usuario por correo o por nombre de usuario
     const user = await userRepository
       .createQueryBuilder("user")
       .where("user.correo = :login OR user.usuario = :login", { login })
       .getOne();
 
     if (!user) {
+      console.warn(`[auth] login no encontrado: ${login}`);
       return res.status(401).json({ message: "Usuario o contraseña incorrectos" });
     }
 
     if (!user.contrasena) {
+      console.warn(`[auth] usuario sin contraseña: id=${user.id}`);
       return res.status(401).json({ message: "Usuario o contraseña incorrectos" });
     }
 
-    // Comparar contraseña
-    const isMatch = await bcrypt.compare(password, user.contrasena);
-    if (!isMatch) {
+    const ok = await bcrypt.compare(password, user.contrasena);
+    if (!ok) {
+      console.warn(`[auth] contraseña incorrecta para login=${login}`);
       return res.status(401).json({ message: "Usuario o contraseña incorrectos" });
     }
 
-    // Asegurarse de que tipo exista
-    const tipoUsuario = user.tipo || "cliente"; // si es null, asumimos cliente
+    const tipoUsuario = (user.tipo || "cliente").toString();
 
-    // Generar token JWT
-    const token = jwt.sign(
-      { id: user.id, tipoUsuario },
-      process.env.JWT_SECRET || "clave_secreta",
-      { expiresIn: "1h" }
-    );
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      console.error("[auth] JWT_SECRET no definido");
+      return res.status(500).json({ message: "Server misconfigured: JWT secret missing" });
+    }
 
-    // Devolver token y tipo de usuario
-    res.json({ token, tipoUsuario });
+    const token = jwt.sign({ role: tipoUsuario }, secret, {
+      subject: String(user.id),
+      expiresIn: "2h",
+    });
+
+    const { contrasena: _p, ...userSafe } = (user as any);
+    console.log(`[auth] login successful: id=${user.id}, tipo=${tipoUsuario}`);
+    return res.json({ token, user: userSafe, tipoUsuario });
   } catch (err) {
     console.error("Error en loginUser:", err);
-    res.status(500).json({ message: err instanceof Error ? err.message : "Error del servidor" });
+    return res.status(500).json({ message: err instanceof Error ? err.message : "Error del servidor" });
   }
 };

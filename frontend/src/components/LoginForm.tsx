@@ -29,6 +29,7 @@ const LoginForm: React.FC = () => {
       // redirige según tipo
       const tipo = data.user?.tipo || data.tipoUsuario || "cliente";
       if (tipo === "admin") navigate("/admin");
+      else if (tipo === "root") navigate("/root");
       else navigate("/dashboard");
     } catch (err: any) {
       setError(err.message || "Error en login");

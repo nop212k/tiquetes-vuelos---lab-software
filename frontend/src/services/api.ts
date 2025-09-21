@@ -28,17 +28,16 @@ export async function getFlight(id: number | string) {
   return res.json();
 }
 
-/* Admin flights */
-export async function adminCreateFlight(payload: any) {
-  const res = await fetch(`${API_BASE}/flights/admin`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...authHeaders() },
-    body: JSON.stringify(payload),
+/* GET current user */
+export async function getMe() {
+  const res = await fetch(`${API_BASE}/users/me`, {
+    headers: { ...authHeaders() }
   });
-  if (!res.ok) throw new Error(`Error creando vuelo: ${res.status}`);
+  if (!res.ok) throw new Error('No autorizado');
   return res.json();
 }
 
+/* Admin flights */
 export async function adminListFlights(params: { page?: number; limit?: number; search?: string } = {}) {
   const qs = new URLSearchParams();
   if (params.page) qs.append("page", String(params.page));
@@ -48,6 +47,16 @@ export async function adminListFlights(params: { page?: number; limit?: number; 
     headers: { ...authHeaders() },
   });
   if (!res.ok) throw new Error(`Error listando vuelos: ${res.status}`);
+  return res.json();
+}
+
+export async function adminCreateFlight(payload: any) {
+  const res = await fetch(`${API_BASE}/flights/admin`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error(`Error creando vuelo: ${res.status}`);
   return res.json();
 }
 

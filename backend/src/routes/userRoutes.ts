@@ -1,14 +1,17 @@
-// src/routes/userRoutes.ts
+// backend/src/routes/userRoutes.ts
 import { Router } from "express";
 import multer from "multer";
-import { createUser } from "../controllers/userController";
+import { createUser, /* si existe, exporta createUser */ } from "../controllers/userController";
+import { getMe } from "../controllers/userController";
+import { authMiddleware } from "../middleware/authMiddleware";
 
 const router = Router();
-
-// Configuración de Multer (en memoria)
 const upload = multer();
 
-// Ruta para registrar usuario con foto
+// registrar usuario con foto
 router.post("/register", upload.single("foto"), createUser);
+
+// obtener usuario actual (protegido)
+router.get("/me", authMiddleware, getMe);
 
 export default router;

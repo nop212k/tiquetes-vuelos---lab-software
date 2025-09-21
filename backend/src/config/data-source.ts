@@ -1,5 +1,7 @@
+// backend/src/config/data-source.ts
 import { DataSource } from "typeorm";
 import { User } from "../models/User";
+import { Vuelo } from "../models/vuelos";
 
 export const AppDataSource = new DataSource({
   type: "postgres",
@@ -8,15 +10,15 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  synchronize: false,
+  synchronize: false, // En desarrollo puedes poner true temporalmente
   logging: true,
-  entities: [User],
+  entities: [User, Vuelo],
   migrations: [],
   subscribers: [],
-  ssl: true, // Habilita SSL
+  ssl: true,
   extra: {
     ssl: {
-      rejectUnauthorized: false, // Necesario para Render.com
+      rejectUnauthorized: false,
     },
   },
 });

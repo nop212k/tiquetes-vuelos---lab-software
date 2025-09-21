@@ -6,6 +6,10 @@ import { AppDataSource } from './config/data-source';
 import userRoutes from './routes/userRoutes';
 import authRoutes from './routes/authRoutes';
 import rootRoutes from "./routes/rootRoutes";
+import vuelosRoutes from './routes/vuelosRoutes';
+import adminVuelosRoutes from './routes/adminVuelosRoutes';
+import { authMiddleware, isAdmin, isRoot } from './middleware/authMiddleware';
+
 
 
 const app = express();
@@ -20,6 +24,11 @@ app.use('/api/users', userRoutes);
 app.use('/api', authRoutes);
 app.use("/uploads", express.static("uploads"));
 app.use("/api", rootRoutes);
+app.use('/api/flights', vuelosRoutes);
+app.use('/api', authMiddleware, isRoot, rootRoutes);
+app.use('/api/flights', vuelosRoutes);
+app.use('/api/flights/admin', authMiddleware, isAdmin, adminVuelosRoutes);
+
 
 
 // Inicializar DB y servidor

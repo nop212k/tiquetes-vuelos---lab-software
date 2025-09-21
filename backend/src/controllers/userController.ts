@@ -1,7 +1,20 @@
 import { Request, Response } from "express";
+import { AuthRequest } from "../middleware/authMiddleware";
 import { AppDataSource } from "../config/data-source";
 import { User } from "../models/User";
 import bcrypt from "bcryptjs";
+
+export const getMe = async (req: AuthRequest, res: Response) => {
+  try {
+    const user = req.user;
+    if (!user) return res.status(401).json({ message: "Not authenticated" });
+    const { contrasena: _p, ...userSafe } = (user as any);
+    return res.json({ user: userSafe });
+  } catch (error) {
+    console.error("getMe error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};  
 
 export const createUser = async (req: Request, res: Response) => {
   try {
