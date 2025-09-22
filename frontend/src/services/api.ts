@@ -8,6 +8,41 @@ function authHeaders() {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+async function parseResponse(res: Response) {
+  let data: any = null;
+  try { data = await res.json(); } catch (_) { /* no json */ }
+
+  if (!res.ok) {
+    const message = data?.message || `HTTP ${res.status}`;
+    const details = data?.details || null;
+    const error: any = new Error(message);
+    error.status = res.status;
+    error.details = details;
+    throw error;
+  }
+  return data;
+}
+
+/* Auth */
+export async function postLogin(payload: { login: string; password: string }) {
+  const res = await fetch(`${API_BASE}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return parseResponse(res);
+}
+
+export async function postRegister(payload: any) {
+  const res = await fetch(`${API_BASE}/users/register`, {
+    method: "POST",
+    // si envías form-data (foto), no pongas Content-Type aquí
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return parseResponse(res);
+}
+
 /* Public flights */
 export async function searchFlights(params: { origin?: string; destination?: string; date?: string; page?: number; limit?: number }) {
   const qs = new URLSearchParams();

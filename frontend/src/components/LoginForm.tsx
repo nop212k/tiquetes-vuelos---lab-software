@@ -1,51 +1,96 @@
 // frontend/src/components/LoginForm.tsx
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { postLogin } from "../services/api";
+import { toast } from "react-toastify";
 
-const LoginForm: React.FC = () => {
-  const [login, setLogin] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
+const schema = z.object({
+  login: z.string().min(3, "Ingrese su usuario o correo"),
+  password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres"),
+});
+type FormData = z.infer<typeof schema>;
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
+export default function LoginForm() {
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
+    resolver: zodResolver(schema),
+    mode: "onTouched",
+  });
+  const [show, setShow] = useState(false);
+
+  async function onSubmit(data: FormData) {
     try {
-      const res = await fetch("http://localhost:8000/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ login, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.message || "Login failed");
-
-      // Guardamos token y user
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user || {}));
-      
-      // redirige según tipo
-      const tipo = data.user?.tipo || data.tipoUsuario || "cliente";
-      if (tipo === "admin") navigate("/admin");
-      else if (tipo === "root") navigate("/root");
-      else navigate("/dashboard");
+      const res = await postLogin(data);
+      localStorage.setItem("token", res.token);
+      localStorage.setItem("user", JSON.stringify(res.user || { tipo: res.tipoUsuario }));
+      toast.success("Bienvenido!");
+      if (res.user?.tipo?.toLowerCase?.() === "admin" || res.tipoUsuario === "admin") window.location.href = "/admin";
+      else if (res.user?.tipo?.toLowerCase?.() === "root" || res.tipoUsuario === "root") window.location.href = "/root";
+      else window.location.href = "/";
     } catch (err: any) {
-      setError(err.message || "Error en login");
-    } finally {
-      setLoading(false);
+      toast.error(err?.message || "Error en login");
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="w-full">
-      <input value={login} onChange={e => setLogin(e.target.value)} placeholder="Correo o usuario" className="mb-3 p-2 rounded w-full" />
-      <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="Contraseña" className="mb-3 p-2 rounded w-full" />
-      <button disabled={loading} className="bg-white text-black px-4 py-2 rounded w-full">{loading ? "Ingresando..." : "Ingresar"}</button>
-      {error && <div className="text-red-300 mt-2">{error}</div>}
-    </form>
-  );
-};
+    <div className="min-h-[70vh] flex items-center justify-center px-4">
+      <div className="w-full max-w-sm bg-[#09374b] rounded-2xl shadow-xl overflow-hidden">    
 
-export default LoginForm;
+        {/* form card */}
+        <div className="bg-white p-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Usuario o correo</label>
+              <input
+                {...register("login")}
+                className="w-full p-3 rounded-md border border-gray-200 bg-white text-black placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#003b5eff]"
+                placeholder="ej: juan.perez o correo@ejemplo.com"
+                aria-invalid={!!errors.login}
+              />
+              {errors.login && <p className="text-red-600 text-sm mt-1">{errors.login.message}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+              <div className="relative">
+                <input
+                  {...register("password")}
+                  type={show ? "text" : "password"}
+                  className="w-full p-3 rounded-md border border-gray-200 bg-white text-black placeholder-gray-400 shadow-sm pr-16 focus:outline-none focus:ring-2 focus:ring-[#003b5eff]"
+                  placeholder="Tu contraseña"
+                  aria-invalid={!!errors.password}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShow(s => !s)}
+                  className="absolute right-2 top-2 text-sm text-gray-600 px-2 py-1 rounded"
+                >
+                  {show ? "Ocultar" : "Mostrar"}
+                </button>
+              </div>
+              {errors.password && <p className="text-red-600 text-sm mt-1">{errors.password.message}</p>}
+            </div>
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className={`w-full py-3 rounded-md text-white font-medium ${isSubmitting ? "bg-gray-400 cursor-not-allowed" : "bg-[#003b5eff] hover:bg-[#005f8a]"}`}
+            >
+              {isSubmitting ? "Ingresando..." : "Ingresar"}
+            </button>
+
+            {/* centered forgot link */}
+            <div className="flex justify-center mt-1">
+              <a href="/forgot-password" className="text-sm text-[#003b5eff] hover:underline">¿Olvidó su contraseña?</a>
+            </div>
+
+            <div className="text-center text-sm text-gray-500">
+              ¿No tienes cuenta? <a href="/registro" className="text-[#003b5eff] hover:underline">Regístrate</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}

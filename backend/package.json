@@ -12,6 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
@@ -21,8 +22,11 @@
     "multer": "^2.0.2",
     "mysql2": "^3.14.4",
     "pg": "^8.16.3",
+    "react-hook-form": "^7.63.0",
+    "react-toastify": "^11.0.5",
     "reflect-metadata": "^0.2.2",
-    "typeorm": "^0.3.26"
+    "typeorm": "^0.3.26",
+    "zod": "^4.1.11"
   },
   "description": "",
   "devDependencies": {

@@ -4,6 +4,7 @@ import { AppDataSource } from "../config/data-source";
 import { User } from "../models/User";
 import bcrypt from "bcryptjs";
 
+
 export const getMe = async (req: AuthRequest, res: Response) => {
   try {
     const user = req.user;

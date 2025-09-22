@@ -1,261 +1,232 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+// frontend/src/components/RegisterForm.tsx
+import React, { useEffect, useState } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { toast } from "react-toastify";
 
-const RegisterForm: React.FC = () => {
-  const navigate = useNavigate();
+const registerSchema = z.object({
+  tipoDocumento: z.enum(["CC","TI","CE"], { required_error: "Seleccione tipo documento" }),
+  documento: z.string().regex(/^\d{8,10}$/, "La cédula debe tener entre 8 y 10 dígitos"),
+  nombres: z.string().min(2, "Ingrese nombres"),
+  apellidos: z.string().min(2, "Ingrese apellidos"),
+  fechaNacimiento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Formato fecha inválido"),
+  lugarNacimiento: z.string().min(2, "Seleccione lugar de nacimiento"),
+  direccion: z.string().min(5, "Dirección muy corta"),
+  genero: z.enum(["M","F","O"], { required_error: "Seleccione género" }),
+  correo: z.string().email("Correo inválido"),
+  usuario: z.string().min(3, "Usuario mínimo 3 caracteres"),
+  contrasena: z.string()
+    .min(10, "Mínimo 10 caracteres")
+    .refine(v => /[A-Z]/.test(v), "Debe incluir mayúscula")
+    .refine(v => /[0-9]/.test(v), "Debe incluir número")
+    .refine(v => !/[^a-zA-Z0-9]/.test(v), "No se permiten símbolos"),
+  repetirContrasena: z.string(),
+}).refine(data => data.contrasena === data.repetirContrasena, {
+  message: "Las contraseñas no coinciden",
+  path: ["repetirContrasena"],
+});
 
-  const [formData, setFormData] = useState({
-    tipoDocumento: "",
-    documento: "",
-    nombres: "",
-    apellidos: "",
-    fechaNacimiento: "",
-    lugarNacimiento: "",
-    direccion: "",
-    genero: "",
-    correo: "",
-    usuario: "",
-    contrasena: "",
-    repetirContrasena: "",
-    foto: null as File | null,
+type FormData = z.infer<typeof registerSchema>;
+
+export default function RegisterForm() {
+  const { register, handleSubmit, control, watch, formState: { errors, isSubmitting } } = useForm<FormData>({
+    resolver: zodResolver(registerSchema),
+    mode: "onTouched",
   });
 
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [fotoPreview, setFotoPreview] = useState<string | null>(null);
+  const [fotoFile, setFotoFile] = useState<File | null>(null);
+  const [fotoName, setFotoName] = useState<string | null>(null);
+  const contrasena = watch("contrasena") || "";
 
-  const today = new Date();
-  const minDate = new Date();
-  minDate.setFullYear(today.getFullYear() - 70);
-  const maxDate = new Date();
-  maxDate.setFullYear(today.getFullYear() - 18);
+  const strength = (() => {
+    let s = 0;
+    if (contrasena.length >= 10) s++;
+    if (/[A-Z]/.test(contrasena)) s++;
+    if (/[0-9]/.test(contrasena)) s++;
+    if (!/[^a-zA-Z0-9]/.test(contrasena)) s++;
+    return s;
+  })();
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value, files } = e.target as HTMLInputElement;
-    setFormData({
-      ...formData,
-      [name]: files ? files[0] : value,
-    });
+  useEffect(() => {
+    if (!fotoFile) { setFotoPreview(null); setFotoName(null); return; }
+    const url = URL.createObjectURL(fotoFile);
+    setFotoPreview(url);
+    setFotoName(fotoFile.name);
+    return () => URL.revokeObjectURL(url);
+  }, [fotoFile]);
 
-    // Validación en tiempo real
-    let errorMsg = "";
-    if (name === "nombres" || name === "apellidos" || name === "lugarNacimiento") {
-      if (!/^[a-zA-ZÀ-ÿ\s]+$/.test(value)) {
-        errorMsg = "Solo se permiten letras y espacios.";
-      }
-    }
-    if (name === "documento") {
-        if (!/^\d{8,10}$/.test(value)) {
-            errorMsg = "La cédula debe tener entre 8 y 10 dígitos.";
-      }
-    }
-    if (name === "contrasena") {
-      if (value.length < 10) errorMsg = "Mínimo 10 caracteres.";
-      else if (!/[A-Z]/.test(value)) errorMsg = "Debe tener al menos una mayúscula.";
-      else if (!/[0-9]/.test(value)) errorMsg = "Debe tener al menos un número.";
-      else if (/[^a-zA-Z0-9]/.test(value)) errorMsg = "No se permiten símbolos.";
-    }
-    if (name === "repetirContrasena") {
-      if (value !== formData.contrasena) errorMsg = "Las contraseñas no coinciden.";
-    }
-
-    setErrors((prev) => ({ ...prev, [name]: errorMsg }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Verificar errores antes de enviar
-    const hasErrors = Object.values(errors).some((err) => err.length > 0);
-    if (hasErrors) {
-      alert("Corrige los errores antes de enviar.");
-      return;
-    }
-
-    // FormData para enviar archivos
-    const data = new FormData();
-    Object.entries(formData).forEach(([key, value]) => {
-      if (value !== null) data.append(key, value as string | Blob);
-    });
-
+  async function onSubmit(data: FormData) {
     try {
-      const res = await fetch("http://localhost:8000/api/users/register", {
-        method: "POST",
-        body: data,
+      const formData = new FormData();
+      Object.entries(data).forEach(([k, v]) => {
+        if (k === "repetirContrasena") return;
+        formData.append(k, String(v));
       });
+      if (fotoFile) formData.append("foto", fotoFile);
 
-      if (!res.ok) throw new Error("Error en el registro");
-      const responseData = await res.json();
-      console.log("Registro exitoso:", responseData);
-      alert("✅ Registro exitoso");
-      navigate("/login");
-    } catch (err) {
-      console.error(err);
-      alert("❌ Error al registrar usuario");
+      const res = await fetch(`${import.meta.env.VITE_API_BASE || "http://localhost:8000"}/api/users/register`, {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: "Error en registro" }));
+        throw new Error(err.message || "Error en registro");
+      }
+      toast.success("Registro exitoso 🎉");
+      window.location.href = "/login";
+    } catch (err: any) {
+      toast.error(err?.message || "Error al registrar");
     }
-  };
+  }
 
-  // Validación general para habilitar botón
-  const isFormValid =
-    formData.tipoDocumento &&
-    formData.documento &&
-    formData.nombres &&
-    formData.apellidos &&
-    formData.fechaNacimiento &&
-    formData.lugarNacimiento &&
-    formData.direccion &&
-    formData.genero &&
-    formData.correo &&
-    formData.usuario &&
-    formData.contrasena &&
-    formData.repetirContrasena &&
-    Object.values(errors).every((err) => err === "");
+  // clase que fuerza color visible (usa !important para sobreescribir reglas globales conflictivas)
+  const authInputCls = "border p-2 rounded bg-white text-black placeholder-gray-400 auth-input";
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="bg-white text-black rounded-lg p-6 w-full max-w-md shadow-lg flex flex-col space-y-4"
-    >
-      <select
-        name="tipoDocumento"
-        value={formData.tipoDocumento}
-        onChange={handleChange}
-        className="border p-2 rounded bg-white"
-      >
-        <option value="">Tipo de documento</option>
-        <option value="CC">Cédula</option>
-        <option value="TI">Tarjeta de Identidad</option>
-        <option value="CE">Cédula de Extranjería</option>
-      </select>
+    <div className="min-h-[80vh] flex items-center justify-center px-4">
+      <style>{`
+        /* Small helper: make sure text in these inputs is visible even if global CSS tries to override */
+        .auth-input { color: #000 !important; }
+        .auth-input::placeholder { color: #9CA3AF !important; } /* placeholder-gray-400 */
+      `}</style>
 
-      <input
-        type="text"
-        name="documento"
-        placeholder="Número de documento"
-        value={formData.documento}
-        onChange={handleChange}
-        className="border p-2 rounded bg-white"
-      />
-      {errors.documento && <p className="text-red-500 text-sm">{errors.documento}</p>}
+      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-lg overflow-hidden grid grid-cols-1 md:grid-cols-2">
+        <div className="hidden md:flex flex-col items-center justify-center bg-gradient-to-br from-[#003b5eff] to-[#005f8a] text-white p-8">
+          <h2 className="text-2xl font-bold">Crea tu cuenta</h2>
+          <p className="mt-2 text-sm opacity-90 text-center">Regístrate y comienza a buscar y gestionar tus vuelos con facilidad.</p>
+          <div className="mt-6 w-36 h-36 rounded-full bg-white/10 flex items-center justify-center">
+            <svg className="w-16 h-16 opacity-90" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M2 12l20-8-8 20-2-7-6-5z" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+        </div>
 
-      <input
-        type="text"
-        name="nombres"
-        placeholder="Nombres"
-        value={formData.nombres}
-        onChange={handleChange}
-        className="border p-2 rounded bg-white"
-      />
-      {errors.nombres && <p className="text-red-500 text-sm">{errors.nombres}</p>}
+        <div className="p-6 md:p-8">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            {/* Avatar + file */}
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden border">
+                {fotoPreview ? (
+                  <img src={fotoPreview} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-gray-400 text-sm">Avatar</span>
+                )}
+              </div>
+              <div>
+                <label className="block text-gray-600 font-medium mb-1">Foto (opcional)</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0] ?? null;
+                      setFotoFile(f);
+                    }}
+                    className="text-sm"
+                    aria-label="Subir foto de perfil"
+                  />
+                  <div className="text-xs text-gray-600">{fotoName ?? ""}</div>
+                </div>
+              </div>
+            </div>
 
-      <input
-        type="text"
-        name="apellidos"
-        placeholder="Apellidos"
-        value={formData.apellidos}
-        onChange={handleChange}
-        className="border p-2 rounded bg-white"
-      />
-      {errors.apellidos && <p className="text-red-500 text-sm">{errors.apellidos}</p>}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <select {...register("tipoDocumento")} className={authInputCls} aria-label="Tipo de documento">
+                <option value="">Tipo documento</option>
+                <option value="CC">Cédula</option>
+                <option value="TI">Tarjeta Identidad</option>
+                <option value="CE">Cédula Extranjería</option>
+              </select>
 
-      <input
-        type="date"
-        name="fechaNacimiento"
-        min={minDate.toISOString().split("T")[0]}
-        max={maxDate.toISOString().split("T")[0]}
-        value={formData.fechaNacimiento}
-        onChange={handleChange}
-        className="border p-2 rounded bg-white"
-      />
+              <input
+                {...register("documento")}
+                placeholder="Número de documento"
+                className={authInputCls}
+                inputMode="numeric"
+                type="text"
+                aria-invalid={!!errors.documento}
+                aria-describedby={errors.documento ? "err-documento" : undefined}
+              />
+            </div>
+            {errors.documento && <p id="err-documento" className="text-red-600 text-sm">{errors.documento.message}</p>}
 
-      <input
-        type="text"
-        name="lugarNacimiento"
-        placeholder="Lugar de nacimiento"
-        value={formData.lugarNacimiento}
-        onChange={handleChange}
-        className="border p-2 rounded bg-white"
-      />
-      {errors.lugarNacimiento && <p className="text-red-500 text-sm">{errors.lugarNacimiento}</p>}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <input {...register("nombres")} placeholder="Nombres" className={authInputCls} aria-invalid={!!errors.nombres} />
+              <input {...register("apellidos")} placeholder="Apellidos" className={authInputCls} aria-invalid={!!errors.apellidos} />
+            </div>
 
-      <input
-        type="text"
-        name="direccion"
-        placeholder="Dirección"
-        value={formData.direccion}
-        onChange={handleChange}
-        className="border p-2 rounded bg-white"
-      />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <input type="date" {...register("fechaNacimiento")} className={authInputCls} aria-invalid={!!errors.fechaNacimiento} />
+              <select {...register("lugarNacimiento")} className={authInputCls} aria-invalid={!!errors.lugarNacimiento}>
+                <option value="">Lugar de nacimiento</option>
+                <option value="Bogotá">Bogotá</option>
+                <option value="Medellín">Medellín</option>
+                <option value="Cali">Cali</option>
+                <option value="Cartagena">Cartagena</option>
+                <option value="Pereira">Pereira</option>
+              </select>
+            </div>
 
-      <select
-        name="genero"
-        value={formData.genero}
-        onChange={handleChange}
-        className="border p-2 rounded bg-white"
-      >
-        <option value="">Género</option>
-        <option value="M">Masculino</option>
-        <option value="F">Femenino</option>
-        <option value="O">Otro</option>
-      </select>
+            <input {...register("direccion")} placeholder="Dirección" className={authInputCls} aria-invalid={!!errors.direccion} />
 
-      <input
-        type="email"
-        name="correo"
-        placeholder="Correo electrónico"
-        value={formData.correo}
-        onChange={handleChange}
-        className="border p-2 rounded bg-white"
-      />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <select {...register("genero")} className={authInputCls} aria-invalid={!!errors.genero}>
+                <option value="">Género</option>
+                <option value="M">Masculino</option>
+                <option value="F">Femenino</option>
+                <option value="O">Otro</option>
+              </select>
 
-      <input
-        type="text"
-        name="usuario"
-        placeholder="Usuario"
-        value={formData.usuario}
-        onChange={handleChange}
-        className="border p-2 rounded bg-white"
-      />
+              <input {...register("correo")} placeholder="Correo electrónico" className={authInputCls} inputMode="email" type="email" aria-invalid={!!errors.correo} />
+            </div>
 
-      <input
-        type="password"
-        name="contrasena"
-        placeholder="Contraseña"
-        value={formData.contrasena}
-        onChange={handleChange}
-        className="border p-2 rounded bg-white"
-      />
-      {errors.contrasena && <p className="text-red-500 text-sm">{errors.contrasena}</p>}
+            <input {...register("usuario")} placeholder="Usuario" className={authInputCls} aria-invalid={!!errors.usuario} />
 
-      <input
-        type="password"
-        name="repetirContrasena"
-        placeholder="Repetir contraseña"
-        value={formData.repetirContrasena}
-        onChange={handleChange}
-        className="border p-2 rounded bg-white"
-      />
-      {errors.repetirContrasena && <p className="text-red-500 text-sm">{errors.repetirContrasena}</p>}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <input type="password" {...register("contrasena")} placeholder="Contraseña" className={authInputCls} aria-invalid={!!errors.contrasena} />
+                {errors.contrasena && <p className="text-red-600 text-sm mt-1">{errors.contrasena.message}</p>}
+                <div className="mt-2">
+                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${strength >= 3 ? "bg-green-500" : strength === 2 ? "bg-yellow-400" : "bg-red-400"}`}
+                      style={{ width: `${(strength / 4) * 100}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Contraseña: {strength >= 3 ? "Fuerte" : strength === 2 ? "Media" : "Débil"}</p>
+                </div>
+              </div>
 
-      <input
-        type="file"
-        name="foto"
-        accept="image/*"
-        onChange={handleChange}
-        className="border p-2 rounded bg-white"
-      />
+              <div>
+                <input type="password" {...register("repetirContrasena")} placeholder="Repetir contraseña" className={authInputCls} aria-invalid={!!errors.repetirContrasena} />
+                {errors.repetirContrasena && <p className="text-red-600 text-sm mt-1">{errors.repetirContrasena.message}</p>}
+              </div>
+            </div>
 
-      <button
-        type="submit"
-        disabled={!isFormValid}
-        className={`p-2 rounded text-white ${
-          isFormValid ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-400 cursor-not-allowed"
-        }`}
-      >
-        Registrarse
-      </button>
-    </form>
+            <div className="flex items-center gap-3">
+              <input
+                id="news"
+                type="checkbox"
+                {...register("suscritoNoticias" as any)}
+                className="w-5 h-5 rounded-sm border border-gray-300 bg-white accent-[#003b5eff] focus:ring-2 focus:ring-[#003b5eff]"
+                aria-label="Deseo recibir ofertas y noticias"
+              />
+              <label htmlFor="news" className="text-sm text-gray-700 select-none">
+                Deseo recibir ofertas y noticias
+              </label>
+            </div>
+
+
+            <button disabled={isSubmitting} className={`w-full py-3 rounded text-white ${isSubmitting ? "bg-gray-400" : "bg-[#003b5eff] hover:bg-[#005f8a]"}`}>
+              {isSubmitting ? "Registrando..." : "Crear cuenta"}
+            </button>
+
+            <p className="text-center text-sm text-gray-500">¿Ya tienes una cuenta? <a href="/login" className="text-[#003b5eff] hover:underline">Inicia sesión</a></p>
+          </form>
+        </div>
+      </div>
+    </div>
   );
-};
-
-export default RegisterForm;
+}

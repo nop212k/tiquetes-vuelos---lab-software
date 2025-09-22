@@ -9,7 +9,8 @@ import rootRoutes from "./routes/rootRoutes";
 import vuelosRoutes from './routes/vuelosRoutes';
 import adminVuelosRoutes from './routes/adminVuelosRoutes';
 import { authMiddleware, isAdmin, isRoot } from './middleware/authMiddleware';
-
+import { errorHandler } from "./middleware/errorHandler";
+import locationsRoutes from './routes/locationsRoutes';
 
 
 const app = express();
@@ -28,7 +29,8 @@ app.use('/api/flights', vuelosRoutes);
 app.use('/api', authMiddleware, isRoot, rootRoutes);
 app.use('/api/flights', vuelosRoutes);
 app.use('/api/flights/admin', authMiddleware, isAdmin, adminVuelosRoutes);
-
+app.use('/api', locationsRoutes);
+app.use(errorHandler);
 
 
 // Inicializar DB y servidor
