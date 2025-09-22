@@ -82,7 +82,8 @@ export default function RegisterForm() {
   }
 
   // clase que fuerza color visible (usa !important para sobreescribir reglas globales conflictivas)
-  const authInputCls = "border p-2 rounded bg-white text-black placeholder-gray-400 auth-input";
+  const authInputCls = "border p-2 rounded bg-white text-black placeholder-gray-400 auth-input [appearance:auto] [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:block [&::-webkit-calendar-picker-indicator]:cursor-pointer";
+
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4">
