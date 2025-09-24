@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import Navbar from "../components/root/Navbarroot"; // Asegúrate de tener un Navbar para admin
+import Navbar from "../components/admin/NavbarAdmin"; // Asegúrate de tener un Navbar para admin
 
 // Simular API_URL, pero no usaremos fetch por ahora
 const API_URL = "http://localhost:8000/api";
