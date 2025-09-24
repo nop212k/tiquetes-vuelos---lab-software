@@ -1,9 +1,11 @@
 // frontend/src/components/RegisterForm.tsx
 import React, { useEffect, useState } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "react-toastify";
+
+
 
 const registerSchema = z.object({
   tipoDocumento: z.enum(["CC","TI","CE"], { required_error: "Seleccione tipo documento" }),
@@ -27,10 +29,29 @@ const registerSchema = z.object({
   path: ["repetirContrasena"],
 });
 
+type Ciudad = {
+  id: string;
+  nombre: string;
+  region: string;
+  pais: string;
+};
+
+
 type FormData = z.infer<typeof registerSchema>;
 
+
+//Definicion de rangos para fecha de nacimiento
+const today = new Date();
+const maxDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate()); // mínimo 18 años
+const minDate = new Date(today.getFullYear() - 100, today.getMonth(), today.getDate()); // máximo 100 años
+
+// Convertir a formato YYYY-MM-DD para el input
+const formatDate = (d: Date) => d.toISOString().split("T")[0];
+
+//-------------------------------------------------------------------------------------------------------------
+
 export default function RegisterForm() {
-  const { register, handleSubmit, control, watch, formState: { errors, isSubmitting } } = useForm<FormData>({
+  const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(registerSchema),
     mode: "onTouched",
   });
@@ -39,6 +60,42 @@ export default function RegisterForm() {
   const [fotoFile, setFotoFile] = useState<File | null>(null);
   const [fotoName, setFotoName] = useState<string | null>(null);
   const contrasena = watch("contrasena") || "";
+
+  //ciudades lugar de nacimiento ----------------------------------------------------------------
+
+  const [ciudades, setCiudades] = useState<Ciudad[]>([]);
+  const [loadingCiudades, setLoadingCiudades] = useState(false);
+  const [query, setQuery] = useState(""); // lo que escribe el usuario
+  const [selectedCiudad, setSelectedCiudad] = useState<Ciudad | null>(null);
+
+  // --- Autocomplete de ciudades ---
+  useEffect(() => {
+    if (!query) return setCiudades([]);
+    const timer = setTimeout(async () => {
+      try {
+        setLoadingCiudades(true);
+        const res = await fetch(`${import.meta.env.VITE_API_BASE}/api/cities?nombre=${query}`);
+        const data = await res.json();
+        setCiudades(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoadingCiudades(false);
+      }
+    }, 300); // espera 300ms para no llamar la API a cada tecla
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  // --- Registro de ciudad seleccionada ---
+  function handleSelectCiudad(c: Ciudad) {
+    setValue("lugarNacimiento", c.nombre); // guarda en el formulario
+    setQuery(c.nombre); // muestra en el input
+    setSelectedCiudad(c); // ✅ solo se puede registrar si se selecciona
+    setCiudades([]); // cierra dropdown
+  }
+
+
+//------------------------------------------------------------------------------------
 
   const strength = (() => {
     let s = 0;
@@ -58,6 +115,10 @@ export default function RegisterForm() {
   }, [fotoFile]);
 
   async function onSubmit(data: FormData) {
+    if (!selectedCiudad) {
+    toast.error("Debes seleccionar una ciudad de la lista");
+    return;
+    }
     try {
       const formData = new FormData();
       Object.entries(data).forEach(([k, v]) => {
@@ -158,16 +219,40 @@ export default function RegisterForm() {
               <input {...register("apellidos")} placeholder="Apellidos" className={authInputCls} aria-invalid={!!errors.apellidos} />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <input type="date" {...register("fechaNacimiento")} className={authInputCls} aria-invalid={!!errors.fechaNacimiento} />
-              <select {...register("lugarNacimiento")} className={authInputCls} aria-invalid={!!errors.lugarNacimiento}>
-                <option value="">Lugar de nacimiento</option>
-                <option value="Bogotá">Bogotá</option>
-                <option value="Medellín">Medellín</option>
-                <option value="Cali">Cali</option>
-                <option value="Cartagena">Cartagena</option>
-                <option value="Pereira">Pereira</option>
-              </select>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3"> 
+              <input
+                type="date"
+                {...register("fechaNacimiento")}
+                className={authInputCls}
+                aria-invalid={!!errors.fechaNacimiento}
+                min={formatDate(minDate)}
+                max={formatDate(maxDate)}
+              />
+              <div className="relative">
+                <input     //Lugar de nacimiento -----------------------
+                  type="text"
+                  {...register("lugarNacimiento")}
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Lugar de nacimiento"
+                  className={authInputCls}
+                />
+                {loadingCiudades && <div className="absolute right-2 top-2">Cargando...</div>}
+
+                {ciudades.length > 0 && (
+                  <ul className="absolute z-50 w-full bg-white border mt-1 max-h-48 overflow-auto">
+                    {ciudades.map(c => (
+                      <li
+                        key={c.id}
+                        className="p-2 hover:bg-gray-200 cursor-pointer text-black"
+                        onClick={() => handleSelectCiudad(c)}
+                      >
+                        {c.nombre} - {c.region}, {c.pais}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </div>
 
             <input {...register("direccion")} placeholder="Dirección" className={authInputCls} aria-invalid={!!errors.direccion} />

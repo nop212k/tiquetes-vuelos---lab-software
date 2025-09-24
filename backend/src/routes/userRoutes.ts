@@ -6,7 +6,19 @@ import { getMe } from "../controllers/userController";
 import { authMiddleware } from "../middleware/authMiddleware";
 
 const router = Router();
-const upload = multer();
+
+// Configuración de multer: guarda las fotos en la carpeta "uploads/"
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/"); // carpeta donde se guardan las fotos
+  },
+  filename: (req, file, cb) => {
+    // ejemplo: user-123456789.png
+    cb(null, `user-${Date.now()}-${file.originalname}`);
+  },
+});
+
+const upload = multer({ storage });
 
 // registrar usuario con foto
 router.post("/register", upload.single("foto"), createUser);

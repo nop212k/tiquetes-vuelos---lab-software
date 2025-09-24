@@ -11,6 +11,7 @@ import adminVuelosRoutes from './routes/adminVuelosRoutes';
 import { authMiddleware, isAdmin, isRoot } from './middleware/authMiddleware';
 import { errorHandler } from "./middleware/errorHandler";
 import locationsRoutes from './routes/locationsRoutes';
+import cityRoutes from "./routes/cityCountries";
 
 
 const app = express();
@@ -23,13 +24,14 @@ app.use(express.json());
 // Rutas
 app.use('/api/users', userRoutes);
 app.use('/api', authRoutes);
+app.use('/api/cities', cityRoutes);
 app.use("/uploads", express.static("uploads"));
-app.use("/api", rootRoutes);
 app.use('/api/flights', vuelosRoutes);
+
 app.use('/api', authMiddleware, isRoot, rootRoutes);
-app.use('/api/flights', vuelosRoutes);
 app.use('/api/flights/admin', authMiddleware, isAdmin, adminVuelosRoutes);
 app.use('/api', locationsRoutes);
+
 app.use(errorHandler);
 
 

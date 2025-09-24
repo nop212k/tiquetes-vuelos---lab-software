@@ -1,5 +1,5 @@
 // src/App.tsx
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Home from "./pages/Home";
 import RegisterPage from "./pages/Registro";
 import LoginPage from "./pages/Login";
@@ -10,8 +10,16 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import ProtectedRoute from "./components/ProtectedRoute";
+import { useEffect } from "react";
 
 function App() {
+  // Verificar si hay un token en localStorage al iniciar la aplicación
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    console.log('Token en App.tsx:', token ? 'Presente' : 'No encontrado');
+  }, []);
+
   return (
     <Router>
       {/* ToastContainer debe estar fuera de <Routes> */}
@@ -20,11 +28,24 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/registro" element={<RegisterPage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/cliente" element={<Cliente />} />
-        <Route path="/root" element={<Root />} />
-        <Route path="/admin" element={<Admin />} />
+        <Route path="/cliente" element={
+          <ProtectedRoute requiredRole="cliente">
+            <Cliente />
+          </ProtectedRoute>
+        } />
+        <Route path="/root" element={
+          <ProtectedRoute requiredRole="root">
+            <Root />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin" element={
+          <ProtectedRoute requiredRole="admin">
+            <Admin />
+          </ProtectedRoute>
+        } />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );

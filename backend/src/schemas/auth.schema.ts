@@ -5,7 +5,10 @@ import { z } from "zod";
  * Schema para login: login puede ser usuario o correo
  */
 export const loginSchema = z.object({
-  login: z.string().min(3, "Usuario o correo requerido"),
+  login: z.string().min(3).refine(
+  val => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) || val.length >= 3,
+  { message: "Debe ser un usuario o correo válido" }
+),
   password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres"),
 });
 
