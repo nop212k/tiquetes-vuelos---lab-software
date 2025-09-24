@@ -1,0 +1,22 @@
+[33m9bb5989[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Descripción de los cambios realizados
+[33m02bb4a6[m ciudades en registro implementadas, reparacion de login
+[33meeb1ee1[m primer intento de gestionar vuelos desde admin
+[33m1cc85a1[m cambio a formularios de login y registro
+[33m7c63370[m Endpoint para admins y gestión de vuelos
+[33m16bc5a0[m endpoints para vuelos
+[33m8e798ef[m hice un espacio
+[33m82f74c0[m ya esta la image
+[33me06bb21[m Añadí interface de admin, crear, borrar, cancelar y crear vuelo, falt conectarlo con el loginform
+[33m89b5496[m root casi terminado
+[33m98183f9[m Agregada interfaz del root con datos de prueba
+[33m5d35701[m mensaje describiendo el cambio
+[33m63f8a62[m Añadió página Cliente en src/pages/, actualizó enrutamiento y corrigió login, añadio texto home maquina de escribir, añadio la misma home a la página de cliente
+[33mcbe9d9f[m Añadí efecto de máquina de escribir al texto VUELA ALTO, VUELA CON PEARL AIRLINES sobre el banner
+[33md2d8a50[m Agregando conexion base datos y empieza el login
+[33m78e08e6[m primera implementación del backend y distribución en carpetas
+[33mf920b49[m primera implementación backend
+[33md9935e3[m update
+[33m0e305fa[m Agrega validaciones de registro y estilos de inputs y botones
+[33ma91c9f0[m ✨ Mejoras en formulario de registro: validación dinámica de contraseña y feedback al usuario
+[33ma0d54ce[m Agrego navbar con login y registro estilizados
+[33m33edb6e[m tiquetes-vuelos-lab-soft
