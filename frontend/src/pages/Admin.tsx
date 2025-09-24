@@ -1,8 +1,11 @@
 // frontend/src/pages/FlightsPage.tsx
 import React, { useEffect, useState } from "react";
-import Navbar from "../components/Navbar";
 import CrearVuelosForm from "../components/admin/CrearVuelosForm";
+import Navbar from "../components/admin/NavbarAdmin";
+
 import axios from "axios";
+
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
 
 interface Vuelo {
   id: number;
@@ -22,7 +25,7 @@ const Admin: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await axios.get("/api/flights"); // Endpoint que devuelve vuelos
+      const res = await axios.get(`${API_BASE}/api/flights`); // Endpoint que devuelve vuelos
       setVuelos(res.data);
     } catch (err: any) {
       console.error("Error cargando vuelos", err);

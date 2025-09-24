@@ -2,6 +2,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
+
 interface Props {
   onVuelosCreados: () => void;
 }
@@ -43,7 +45,7 @@ const CrearVuelosForm: React.FC<Props> = ({ onVuelosCreados }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axios.post("/api/vuelos", { codigo, origen, destino, horaSalida, horaLlegada });
+      await axios.post(`${API_BASE}/api/flights/admin`, { codigo, origen, destino, horaSalida, horaLlegada });
       onVuelosCreados();
       setCodigo(generarCodigoVuelo());
       setOrigen("");
