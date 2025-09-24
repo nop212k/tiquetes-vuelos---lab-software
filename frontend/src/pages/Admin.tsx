@@ -1,16 +1,8 @@
-<<<<<<< HEAD
 // frontend/src/pages/FlightsPage.tsx
 import React, { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import CrearVuelosForm from "../components/admin/CrearVuelosForm";
 import axios from "axios";
-=======
-import { useEffect, useState } from "react";
-import Navbar from "../components/admin/NavbarAdmin"; // Asegúrate de tener un Navbar para admin
-
-// Simular API_URL, pero no usaremos fetch por ahora
-const API_URL = "http://localhost:8000/api";
->>>>>>> 286f75edf8eb586b9754259b134f56b535be4393
 
 interface Vuelo {
   id: number;
