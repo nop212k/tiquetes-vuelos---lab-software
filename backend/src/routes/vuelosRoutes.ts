@@ -1,13 +1,32 @@
 // backend/src/routes/vuelosRoutes.ts
 import { Router } from "express";
-import { searchFlights, getFlightById } from "../controllers/vuelosController";
+import {
+  createFlight,
+  listFlightsAdmin,
+  getFlightAdmin,
+  updateFlight,
+  deleteFlight,
+} from "../controllers/adminVuelosController";
 
 const router = Router();
 
-// GET /api/flights
-router.get("/", searchFlights);
+// -----------------------------
+// ADMIN VUELOS ROUTES
+// -----------------------------
 
-// GET /api/flights/:id
-router.get("/:id", getFlightById);
+// GET /api/vuelos -> Listar vuelos (con búsqueda y paginación)
+router.get("/", listFlightsAdmin);
+
+// GET /api/vuelos/:id -> Obtener vuelo por ID
+router.get("/:id", getFlightAdmin);
+
+// POST /api/vuelos -> Crear vuelo
+router.post("/", createFlight);
+
+// PUT /api/vuelos/:id -> Actualizar vuelo
+router.put("/:id", updateFlight);
+
+// DELETE /api/vuelos/:id -> Eliminar vuelo
+router.delete("/:id", deleteFlight);
 
 export default router;
