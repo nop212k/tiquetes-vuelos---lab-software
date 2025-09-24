@@ -1,44 +1,75 @@
-// frontend/src/components/LoginForm.tsx
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { postLogin } from "../services/api";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 const schema = z.object({
-  login: z.string().min(3, "Ingrese su usuario o correo"),
+  login: z.union([
+    z.string().min(3, "Usuario mínimo 3 caracteres"),
+    z.string().email("Debe ser un correo válido")
+  ]),
   password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres"),
 });
+
 type FormData = z.infer<typeof schema>;
 
 export default function LoginForm() {
+  const navigate = useNavigate();
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
     mode: "onTouched",
   });
   const [show, setShow] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   async function onSubmit(data: FormData) {
+    setLoginError(null);
     try {
+      console.log('Intentando iniciar sesión con:', { login: data.login });
       const res = await postLogin(data);
+      console.log('Respuesta de login:', res);
+
+      if (!res || !res.token) {
+        throw new Error('Respuesta inválida del servidor');
+      }
+
+      // Guardar token y datos de usuario
       localStorage.setItem("token", res.token);
       localStorage.setItem("user", JSON.stringify(res.user || { tipo: res.tipoUsuario }));
+
       toast.success("Bienvenido!");
-      if (res.user?.tipo?.toLowerCase?.() === "admin" || res.tipoUsuario === "admin") window.location.href = "/admin";
-      else if (res.user?.tipo?.toLowerCase?.() === "root" || res.tipoUsuario === "root") window.location.href = "/root";
-      else window.location.href = "/";
+
+      // Determinar la redirección basada en el rol del usuario
+      const userRole = (res.user?.tipo || res.tipoUsuario)?.toLowerCase?.();
+      console.log('Rol del usuario:', userRole);
+
+      // Usar navigate en lugar de window.location para mantener el estado de React
+      if (userRole === "admin") navigate("/admin");
+      else if (userRole === "root") navigate("/root");
+      else if (userRole === "cliente") navigate("/cliente");
+      else navigate("/");
+      
     } catch (err: any) {
-      toast.error(err?.message || "Error en login");
+      console.error('Error en login:', err);
+      const errorMessage = err?.message || "Usuario o contraseña incorrectos";
+      setLoginError(errorMessage);
+      toast.error(errorMessage);
     }
   }
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-4">
-      <div className="w-full max-w-sm bg-[#09374b] rounded-2xl shadow-xl overflow-hidden">    
-
-        {/* form card */}
+      <div className="w-full max-w-sm bg-[#09374b] rounded-2xl shadow-xl overflow-hidden">
         <div className="bg-white p-6">
+          {loginError && (
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+              {loginError}
+            </div>
+          )}
+          
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Usuario o correo</label>
@@ -80,7 +111,6 @@ export default function LoginForm() {
               {isSubmitting ? "Ingresando..." : "Ingresar"}
             </button>
 
-            {/* centered forgot link */}
             <div className="flex justify-center mt-1">
               <a href="/forgot-password" className="text-sm text-[#003b5eff] hover:underline">¿Olvidó su contraseña?</a>
             </div>
