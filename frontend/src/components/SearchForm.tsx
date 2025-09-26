@@ -232,7 +232,7 @@ const SearchForm: React.FC = () => {
           )}
 
           {!loading && results.length === 0 && (
-            <div style={{ textAlign: "center", color: "#666", padding: 28 }}>No hay resultados</div>
+            <div style={{ textAlign: "center", color: "#666", padding: 28 }}>Que esperas para buscar tus vuelos</div>
           )}
 
           <div

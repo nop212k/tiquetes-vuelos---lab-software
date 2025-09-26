@@ -12,15 +12,11 @@ const Navbar: React.FC = () => {
   return (
     <nav className="bg-gradient-to-r from-[#005f7f] to-[#003b5eff] p-4 flex justify-between items-center">
       <div className="flex space-x-10">
-        <Link to="/cambio_contraseña" className="text-white hover:underline">Cambio de contraseña</Link>
-
-        {/* Botón de cerrar sesión */}
-        <button 
-          onClick={handleLogout} 
-          className="text-white hover:underline"
-        >
-          Cerrar sesión
-        </button>
+         <Link to="/foroAdmin" className="text-white hover:underline cursor-pointer">Foro</Link>      
+          {/* Botón de cerrar sesión */}
+          <button onClick={handleLogout}
+            className="bg-transparent border-none text-white hover:underline cursor-pointer appearance-none p-0">
+          Cerrar sesión</button>
       </div>
 
       {/* Logo a la derecha */}

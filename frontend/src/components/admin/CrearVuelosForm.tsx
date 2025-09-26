@@ -202,9 +202,8 @@ const CrearVuelosForm: React.FC<{ onVuelosCreados?: () => void }> = ({ onVuelosC
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Código de vuelo</label>
-                <input value={codigo} onChange={(e) => setCodigo(e.target.value)} placeholder={generarCodigo()} className="w-full p-3 rounded-md border border-gray-200 bg-gray-100 text-gray-700 shadow-sm" />
-                <p className="text-xs text-gray-500 mt-1">Si dejas vacío, se generará automáticamente.</p>
+                <label className="block text-sm font-medium text-gray-700 mb-1">El código de vuelo sera generado al crear el vuelo</label>
+                
               </div>
 
               <div>
