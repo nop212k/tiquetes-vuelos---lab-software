@@ -79,7 +79,7 @@ const Home: React.FC = () => {
         {/* CONTENIDO SOBRE LA IMAGEN */}
         <div className="hero__content" role="main" aria-label="Portada principal">
           <div className="hero__text">
-            <h1 className="hero__title">¡Bienvenido a Pearl Airlines!</h1>
+            <h1 className="hero__title">¡Bienvenido!</h1>
           </div>
 
           {promoVisible && (

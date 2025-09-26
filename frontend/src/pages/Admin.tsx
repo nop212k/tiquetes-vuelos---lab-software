@@ -136,7 +136,7 @@ const Admin: React.FC = () => {
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
-          borderRadius: 8,
+          
         }}
       >
         <div className="mb-6">
