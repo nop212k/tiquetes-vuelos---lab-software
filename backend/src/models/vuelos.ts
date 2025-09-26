@@ -1,4 +1,3 @@
-// src/vuelos/vuelos.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -17,11 +16,8 @@ export class Vuelo {
   @Column({ name: 'codigo_vuelo', type: 'varchar', length: 10 })
   codigoVuelo!: string;
 
-  @Column({ name: 'fecha', type: 'date', nullable: false })
-  fecha!: string; // YYYY-MM-DD
-
-  @Column({ name: 'hora', type: 'time', nullable: false })
-  hora!: string; // HH:MM:SS
+  @Column({ name: 'hora', type: 'timestamp', nullable: false })
+  hora!: Date; // timestamp completo de salida
 
   @Column({ name: 'origen', type: 'varchar', length: 100 })
   origen!: string;
@@ -35,11 +31,11 @@ export class Vuelo {
   @Column({ name: 'es_internacional', type: 'boolean', default: false })
   esInternacional!: boolean;
 
-  @Column({ name: 'hora_local_destino', type: 'time', nullable: true })
-  horaLocalDestino!: string | null; // HH:MM:SS
+  @Column({ name: 'hora_local_destino', type: 'timestamp', nullable: true })
+  horaLocalDestino!: Date | null; // timestamp completo en destino
 
   @Column({ name: 'costo_base', type: 'numeric', precision: 12, scale: 2 })
-  costoBase!: string; // usar string para numeric en TS
+  costoBase!: string;
 
   @Column({ name: 'estado', type: 'varchar', length: 30, default: 'programado' })
   estado!: string;
@@ -50,7 +46,7 @@ export class Vuelo {
     default: () => 'CURRENT_TIMESTAMP',
   })
   creadoEn!: Date;
-  
+
   @UpdateDateColumn({
     name: 'actualizado_en',
     type: 'timestamptz',

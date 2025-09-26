@@ -2,6 +2,7 @@
 import { Request, Response } from "express";
 import { AppDataSource } from "../config/data-source";
 import { Vuelo } from "../models/vuelos";
+import { createFlightSchema } from "../schemas/flight.schema";
 
 const repo = () => AppDataSource.getRepository(Vuelo);
 
@@ -9,36 +10,45 @@ const repo = () => AppDataSource.getRepository(Vuelo);
 export const createFlight = async (req: Request, res: Response) => {
   try {
     const {
-      codigoVuelo,
-      fecha,
-      hora,
+      hora, // timestamp de salida completo
       origen,
       destino,
       tiempoVuelo,
       esInternacional = false,
-      horaLocalDestino = null,
+      horaLocalDestino = null, // timestamp de llegada completo
       costoBase,
       estado = "programado",
     } = req.body;
 
-    if (!codigoVuelo || !fecha || !hora || !origen || !destino || !tiempoVuelo || !costoBase) {
+    if (!hora || !origen || !destino || !tiempoVuelo || !costoBase) {
       return res.status(400).json({ message: "Campos obligatorios faltantes" });
     }
 
     const vuelo = new Vuelo();
-    vuelo.codigoVuelo = String(codigoVuelo);
-    vuelo.fecha = String(fecha);
-    vuelo.hora = String(hora);
+
+    vuelo.codigoVuelo = "AVTEMP";
+    
+    vuelo.hora = new Date(hora);
     vuelo.origen = String(origen);
     vuelo.destino = String(destino);
     vuelo.tiempoVuelo = Number(tiempoVuelo);
     vuelo.esInternacional = Boolean(esInternacional);
-    vuelo.horaLocalDestino = horaLocalDestino ? String(horaLocalDestino) : null;
-    // Guardamos costoBase como string (entity usa string)
+    vuelo.horaLocalDestino = horaLocalDestino ? new Date(horaLocalDestino) : null;
     vuelo.costoBase = typeof costoBase === "number" ? costoBase.toFixed(2) : String(costoBase);
     vuelo.estado = String(estado);
 
+    const parsed = createFlightSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Datos inválidos", errors: parsed.error.errors });
+    }
+
+    // Guardamos sin código primero
     const saved = await repo().save(vuelo);
+
+    // Generamos código AV consecutivo usando el ID
+    saved.codigoVuelo = `AV${saved.id.toString().padStart(3, "0")}`;
+    await repo().save(saved);
+
     return res.status(201).json({ vuelo: saved });
   } catch (error) {
     console.error("createFlight error:", error);
@@ -50,16 +60,18 @@ export const createFlight = async (req: Request, res: Response) => {
 export const listFlightsAdmin = async (req: Request, res: Response) => {
   try {
     const { page = "1", limit = "50", search } = req.query as Record<string, string>;
-
     const take = Math.min(200, parseInt(limit || "50"));
     const skip = (Math.max(1, parseInt(page || "1")) - 1) * take;
 
     const qb = repo().createQueryBuilder("v");
     if (search) {
-      qb.where("LOWER(v.codigoVuelo) LIKE :s OR LOWER(v.origen) LIKE :s OR LOWER(v.destino) LIKE :s", { s: `%${search.toLowerCase()}%` });
+      qb.where(
+        "LOWER(v.codigoVuelo) LIKE :s OR LOWER(v.origen) LIKE :s OR LOWER(v.destino) LIKE :s",
+        { s: `%${search.toLowerCase()}%` }
+      );
     }
 
-    qb.orderBy("v.fecha", "DESC").skip(skip).take(take);
+    qb.orderBy("v.hora", "DESC").skip(skip).take(take);
 
     const [results, total] = await qb.getManyAndCount();
     return res.json({ results, meta: { total, page: Number(page), limit: take } });
@@ -90,16 +102,16 @@ export const updateFlight = async (req: Request, res: Response) => {
     if (!vuelo) return res.status(404).json({ message: "Vuelo no encontrado" });
 
     const body = req.body;
-    // Solo actualizamos campos permitidos
     if (body.codigoVuelo !== undefined) vuelo.codigoVuelo = String(body.codigoVuelo);
-    if (body.fecha !== undefined) vuelo.fecha = String(body.fecha);
-    if (body.hora !== undefined) vuelo.hora = String(body.hora);
+    if (body.hora !== undefined) vuelo.hora = new Date(body.hora);
     if (body.origen !== undefined) vuelo.origen = String(body.origen);
     if (body.destino !== undefined) vuelo.destino = String(body.destino);
     if (body.tiempoVuelo !== undefined) vuelo.tiempoVuelo = Number(body.tiempoVuelo);
     if (body.esInternacional !== undefined) vuelo.esInternacional = Boolean(body.esInternacional);
-    if (body.horaLocalDestino !== undefined) vuelo.horaLocalDestino = body.horaLocalDestino ? String(body.horaLocalDestino) : null;
-    if (body.costoBase !== undefined) vuelo.costoBase = typeof body.costoBase === "number" ? body.costoBase.toFixed(2) : String(body.costoBase);
+    if (body.horaLocalDestino !== undefined)
+      vuelo.horaLocalDestino = body.horaLocalDestino ? new Date(body.horaLocalDestino) : null;
+    if (body.costoBase !== undefined)
+      vuelo.costoBase = typeof body.costoBase === "number" ? body.costoBase.toFixed(2) : String(body.costoBase);
     if (body.estado !== undefined) vuelo.estado = String(body.estado);
 
     const updated = await repo().save(vuelo);

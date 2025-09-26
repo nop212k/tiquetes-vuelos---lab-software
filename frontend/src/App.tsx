@@ -11,6 +11,7 @@ import "react-toastify/dist/ReactToastify.css";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import ProtectedRoute from "./components/ProtectedRoute";
+import CrearVuelosForm from "./components/admin/CrearVuelosForm";
 import { useEffect } from "react";
 
 function App() {
@@ -28,24 +29,13 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/registro" element={<RegisterPage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/cliente" element={
-          <ProtectedRoute requiredRole="cliente">
-            <Cliente />
-          </ProtectedRoute>
-        } />
-        <Route path="/root" element={
-          <ProtectedRoute requiredRole="root">
-            <Root />
-          </ProtectedRoute>
-        } />
-        <Route path="/admin" element={
-          <ProtectedRoute requiredRole="admin">
-            <Admin />
-          </ProtectedRoute>
-        } />
+        <Route path="/cliente" element={<ProtectedRoute requiredRole="cliente"><Cliente /></ProtectedRoute>}/>
+        <Route path="/root" element={<ProtectedRoute requiredRole="root"><Root /></ProtectedRoute>}/>
+        <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><Admin /></ProtectedRoute>}/>
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="/crear-vuelos" element={<ProtectedRoute requiredRole="admin"><CrearVuelosForm /></ProtectedRoute>}/>
       </Routes>
     </Router>
   );

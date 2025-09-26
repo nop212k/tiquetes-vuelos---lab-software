@@ -19,12 +19,7 @@ const Navbar: React.FC = () => {
         <Link to="/checkin" className="text-white hover:underline">Check in</Link>
 
         {/* Botón de cerrar sesión */}
-        <button 
-          onClick={handleLogout} 
-          className="text-white hover:underline"
-        >
-          Cerrar sesión
-        </button>
+        <Link to="/" onClick={handleLogout}  className="text-white hover:underline">Cerrar sesión</Link>
       </div>
 
       {/* Logo a la derecha */}
