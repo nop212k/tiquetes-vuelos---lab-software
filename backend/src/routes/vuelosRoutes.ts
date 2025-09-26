@@ -1,3 +1,4 @@
+// backend/src/routes/vuelosRoutes.ts
 import { Router } from "express";
 import {
   createFlight,
@@ -8,27 +9,18 @@ import {
 } from "../controllers/adminVuelosController";
 import { authMiddleware, isAdmin } from "../middleware/authMiddleware";
 import { validateBody } from "../middleware/validateSchema";
-import { createFlightSchema } from "../schemas/flight.schema"; // tu schema Zod
+import { createFlightSchema } from "../schemas/flight.schema"; // si existe
 
 const router = Router();
 
-// -----------------------------
-// ADMIN VUELOS ROUTES
-// -----------------------------
+// Rutas públicas (listar, ver)
+router.get("/", listFlightsAdmin);       // GET /api/flights
+router.get("/:id", getFlightAdmin);     // GET /api/flights/:id
 
-// GET /api/vuelos -> Listar vuelos (con búsqueda y paginación)
-router.get("/", listFlightsAdmin);
-
-// GET /api/vuelos/:id -> Obtener vuelo por ID
-router.get("/:id", getFlightAdmin);
-
-// POST /api/vuelos -> Crear vuelo (solo admin) con validación
-router.post("/", authMiddleware, isAdmin, validateBody(createFlightSchema), createFlight);
-
-// PUT /api/vuelos/:id -> Actualizar vuelo
-router.put("/:id", authMiddleware, isAdmin, validateBody(createFlightSchema), updateFlight);
-
-// DELETE /api/vuelos/:id -> Eliminar vuelo
-router.delete("/:id", authMiddleware, isAdmin, deleteFlight);
+// Rutas admin protegidas
+router.post("/admin", authMiddleware, isAdmin, validateBody(createFlightSchema), createFlight);      // POST /api/flights/admin
+router.put("/admin/:id", authMiddleware, isAdmin, validateBody(createFlightSchema), updateFlight);  // PUT /api/flights/admin/:id
+router.delete("/admin/:id", authMiddleware, isAdmin, deleteFlight);                                // DELETE /api/flights/admin/:id
+router.get("/admin", authMiddleware, isAdmin, listFlightsAdmin);                                   // GET /api/flights/admin
 
 export default router;

@@ -39,7 +39,7 @@ export const createFlight = async (req: Request, res: Response) => {
 
     const parsed = createFlightSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ message: "Datos inválidos", errors: parsed.error.errors });
+      return res.status(400).json({ message: "Datos inválidos", errors: parsed.error.issues });
     }
 
     // Guardamos sin código primero

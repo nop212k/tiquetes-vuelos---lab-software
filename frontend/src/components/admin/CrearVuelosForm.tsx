@@ -1,34 +1,18 @@
+// frontend/src/components/admin/CrearVuelosForm.tsx
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Navbar from "../admin/NavbarAdmin";
-import * as z from "zod";
 import moment from "moment-timezone";
 import { useNavigate } from "react-router-dom";
 
-
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
-
-interface Props {
-  onVuelosCreados?: () => void;
-}
-
 const ciudadesOrigen = ["Pereira", "Bogotá", "Medellín", "Cali", "Cartagena"] as const;
-const ciudadesDestino = ["Madrid", "Londres", "New York", "Buenos Aires", "Miami"] as const;
+const ciudadesDestino = [
+  "Pereira", "Bogotá", "Medellín", "Cali", "Cartagena",
+  "Madrid", "Londres", "New York", "Buenos Aires", "Miami"
+] as const;
 
-//Validación con Zod
-const vueloSchema = z.object({
-  origen: z.enum(ciudadesOrigen),
-  destino: z.enum(ciudadesDestino),
-  horaSalida: z.string().refine((value) => {
-    const salida = new Date(value);
-    const ahoraMas3 = new Date();
-    ahoraMas3.setHours(ahoraMas3.getHours() + 3);
-    return salida >= ahoraMas3;
-  }, { message: "La hora de salida debe ser al menos 3 horas después de la actual" }),
-});
-
-//Distancias aproximadas en km
 const distancias: Record<string, number> = {
   Madrid: 8000,
   Londres: 8500,
@@ -37,7 +21,6 @@ const distancias: Record<string, number> = {
   Miami: 2400,
 };
 
-// 📌 Zonas horarias
 const zonasHorarias: Record<string, string> = {
   Madrid: "Europe/Madrid",
   Londres: "Europe/London",
@@ -46,119 +29,166 @@ const zonasHorarias: Record<string, string> = {
   Miami: "America/New_York",
 };
 
-//Función de cálculo realista
-function calcularHoraLlegada(origen: string, destino: string, horaSalida: string) {
-  const salida = moment.tz(horaSalida, "America/Bogota"); // siempre desde Colombia
+const destinosInternacionales = new Set(["Madrid", "Londres", "New York", "Buenos Aires", "Miami"]);
 
-  let duracionVuelo = distancias[destino] / 900; // velocidad estándar 900 km/h
-  if (origen !== "Bogotá") {
-    duracionVuelo += 1; // conexión interna aprox
-  }
+function calcularLlegadaYDuracion(origen: string, destino: string, horaSalidaISO: string) {
+  // horaSalidaISO => "YYYY-MM-DDTHH:mm" (datetime-local)
+  const salidaLocal = moment.tz(horaSalidaISO, "YYYY-MM-DDTHH:mm", "America/Bogota");
+  if (!salidaLocal.isValid()) return null;
 
-  const llegada = salida.clone().add(duracionVuelo, "hours");
-  const llegadaDestino = llegada.clone().tz(zonasHorarias[destino]);
+  const distancia = distancias[destino] ?? 300;
+  let duracionHoras = distancia / 900;
+  if (origen !== "Bogotá") duracionHoras += 0.2;
+  const duracionMinutos = Math.max(1, Math.round(duracionHoras * 60)); // al menos 1
+
+  const llegadaUTC = salidaLocal.clone().add(duracionMinutos, "minutes").utc();
+  const zonaDestino = destinosInternacionales.has(destino) ? (zonasHorarias[destino] ?? "UTC") : "America/Bogota";
+  const llegadaLocalDestino = salidaLocal.clone().add(duracionMinutos, "minutes").tz(zonaDestino);
+
+  const llegadaLocalForInput = llegadaLocalDestino.format("YYYY-MM-DDTHH:mm"); // para mostrar
+  const llegadaUtcIso = llegadaUTC.toISOString();
+  const salidaUtcIso = salidaLocal.clone().utc().toISOString();
 
   return {
-    localDestino: llegadaDestino.format("YYYY-MM-DDTHH:mm"), // para mostrar en input
-    utc: llegada.utc().format(), // para guardar en BD
+    duracionMinutos,
+    llegadaLocalForInput,
+    llegadaUtcIso,
+    salidaUtcIso,
   };
 }
 
+function decodeJwtPayload(token: string | null) {
+  if (!token) return null;
+  try {
+    const parts = token.split(".");
+    if (parts.length < 2) return null;
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
+    return payload;
+  } catch (err) {
+    return null;
+  }
+}
 
-const CrearVuelosForm: React.FC<Props> = ({ onVuelosCreados }) => {
+const CrearVuelosForm: React.FC<{ onVuelosCreados?: () => void }> = ({ onVuelosCreados }) => {
   const navigate = useNavigate();
   const [codigo, setCodigo] = useState("");
   const [origen, setOrigen] = useState("");
   const [destino, setDestino] = useState("");
-  const [horaSalida, setHoraSalida] = useState("");
-  const [horaLlegada, setHoraLlegada] = useState("");
+  const [horaSalida, setHoraSalida] = useState("");      // datetime-local: YYYY-MM-DDTHH:mm
+  const [horaLlegada, setHoraLlegada] = useState("");    // computed datetime-local
+  const [duracionMin, setDuracionMin] = useState<number | null>(null);
+  const [costoBase, setCostoBase] = useState<number>(100000);
+  const [loading, setLoading] = useState(false);
 
-  //Calculamos llegada automáticamente
+  function generarCodigo() {
+    const now = Date.now().toString().slice(-5);
+    return `AV${now}`;
+  }
+
   useEffect(() => {
-    if (origen && destino && horaSalida) {
-      const { localDestino } = calcularHoraLlegada(origen, destino, horaSalida);
-      setHoraLlegada(localDestino);
-      }
-    }, [origen, destino, horaSalida]);
+    setCodigo(generarCodigo());
+  }, []);
 
+  useEffect(() => {
+    if (!origen || !destino || !horaSalida) {
+      setHoraLlegada("");
+      setDuracionMin(null);
+      return;
+    }
+    const res = calcularLlegadaYDuracion(origen, destino, horaSalida);
+    if (res) {
+      setHoraLlegada(res.llegadaLocalForInput);
+      setDuracionMin(res.duracionMinutos);
+    } else {
+      setHoraLlegada("");
+      setDuracionMin(null);
+    }
+  }, [origen, destino, horaSalida]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  console.log("Formulario enviado");
-  console.log("Datos a enviar:", { origen, destino, horaSalida });
+    // validación básica cliente
+    if (!origen || !destino) { alert("Selecciona origen y destino."); return; }
+    if (!horaSalida) { alert("Selecciona fecha y hora de salida."); return; }
+    if (duracionMin == null || duracionMin < 1) { alert("No se pudo calcular correctamente la duración."); return; }
 
-  
-  
+    const token = localStorage.getItem("token");
+    if (!token) { alert("Debes iniciar sesión como admin."); navigate("/login"); return; }
 
+    const jwtPayload = decodeJwtPayload(token);
+    const roleFromToken = jwtPayload?.role ?? jwtPayload?.tipo ?? jwtPayload?.tipoUsuario ?? null;
+    if (!roleFromToken || String(roleFromToken).toLowerCase() !== "admin") {
+      alert("Tu token no tiene rol 'admin'. Inicia sesión con una cuenta admin.");
+      return;
+    }
 
-  // Validación con Zod antes de enviar
-  const validacion = vueloSchema.safeParse({ origen, destino, horaSalida });
-  if (!validacion.success) {
-    console.error("Errores de validación:", validacion.error.errors);
-    alert(validacion.error.errors[0].message);
-    return;
-  }
+    // recalcula por seguridad
+    const calc = calcularLlegadaYDuracion(origen, destino, horaSalida);
+    if (!calc) { alert("Error calculando llegada/duración."); return; }
 
-  try {
-    // Calculamos llegada y duración
-    const { utc } = calcularHoraLlegada(origen, destino, horaSalida);
+    const { duracionMinutos, llegadaUtcIso } = calc;
 
-    
-    // Duración aproximada en horas
-    const duracionVuelo = Math.round(moment(utc).diff(moment(horaSalida), "hours", true));
-    const token = localStorage.getItem("token"); 
-    // Enviar al backend
-    await axios.post(`${API_BASE}/api/flights/`, {
-        origen,
-        destino,
-        tiempoVuelo: duracionVuelo,
-        esInternacional: true,
-        hora: moment(horaSalida).format("YYYY-MM-DD HH:mm:ss"),
-        horaLocalDestino: moment(horaLlegada).format("YYYY-MM-DD HH:mm:ss"),
-        costoBase: 1000
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+    // Nota: el backend espera 'hora' con formato "YYYY-MM-DDTHH:mm" (min length 16)
+    const horaFormatoSchema = moment(horaSalida).format("YYYY-MM-DDTHH:mm");
 
+    // horaLlegada (según schema: "timestamp completo en UTC")
+    const horaLlegadaUTC = llegadaUtcIso; // ya es ISO UTC
 
+    const payload = {
+      codigoVuelo: codigo.trim() || generarCodigo(),
+      // campos EXACTOS que pide createFlightSchema
+      hora: horaFormatoSchema,               // e.g. "2025-09-27T14:30" (16 chars)
+      origen,
+      destino,
+      tiempoVuelo: Number(duracionMinutos),  // minutos, entero >=1
+      esInternacional: destinosInternacionales.has(destino),
+      horaLlegada: horaLlegadaUTC,           // ISO UTC (string)
+      costoBase: Number(costoBase),
+      estado: "programado"
+    };
 
-
-
-// Limpiar formulario
-setOrigen("");
-setDestino("");
-setHoraSalida("");
-setHoraLlegada("");
-setCodigo("");
-    
-onVuelosCreados?.(); // avisar al padre si es necesario
-} catch (err: any) {
-  if (err.response) {
-    console.error("❌ Error del backend:", err.response.status, err.response.data);
-    alert(`Error del backend: ${err.response.data.message || "Revisa la consola"}`);
-  } else if (err.request) {
-    console.error("❌ No hubo respuesta del backend:", err.request);
-    alert("No hubo respuesta del backend. Revisa la consola y tu API.");
-  } else {
-    console.error("❌ Error enviando la request:", err.message);
-    alert("Error enviando la request. Revisa la consola.");
-  }
-}
-
-
-navigate("/admin");
-
-
-};
-
+    console.log("Payload a enviar a /api/flights/admin:", payload);
+    setLoading(true);
+    try {
+      const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+      const res = await axios.post(`${API_BASE}/api/flights/admin`, payload, { headers });
+      console.log("Respuesta backend:", res.data);
+      alert("✅ Vuelo creado correctamente.");
+      setCodigo(generarCodigo());
+      setOrigen("");
+      setDestino("");
+      setHoraSalida("");
+      setHoraLlegada("");
+      setDuracionMin(null);
+      onVuelosCreados?.();
+      navigate("/admin");
+    } catch (err: any) {
+      console.error("Error creando vuelo (admin):", err?.response?.status, err?.response?.data || err.message);
+      const status = err?.response?.status;
+      const data = err?.response?.data;
+      if (status === 403) {
+        alert("403 Forbidden: tu usuario no tiene permisos para crear vuelos en /api/flights/admin. Verifica el rol en token y que tu usuario en DB sea 'admin'.");
+      } else if (status === 400) {
+        if (data?.details) {
+          // mostrar detalles de validación para depurar
+          alert("400 Bad Request: " + (data.message || "Datos inválidos") + "\n\n" + JSON.stringify(data.details, null, 2));
+        } else {
+          alert("400 Bad Request: " + JSON.stringify(data));
+        }
+      } else {
+        alert("Error creando vuelo. Revisa consola (Network) para ver payload/respuesta.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div>
       <Navbar />
-      {/* Fondo */}
       <div
-        className="min-h-[100vh] flex items-center justify-center px-4"
+        className="min-h-[100vh] flex items-center justify-center px-4 py-10"
         style={{
           backgroundImage: "url('/images/fondoAdmin.jpg')",
           backgroundSize: "cover",
@@ -166,95 +196,57 @@ navigate("/admin");
           backgroundRepeat: "no-repeat",
         }}
       >
-        {/* Formulario */}
         <div className="w-full max-w-lg bg-[#09374b] rounded-2xl shadow-xl overflow-hidden">
           <div className="bg-white p-6">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">Crear Vuelo</h2>
+
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Código */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Código de vuelo</label>
-                <input value={codigo} readOnly className="w-full p-3 rounded-md border border-gray-200 bg-gray-100 text-gray-700 shadow-sm" />
+                <input value={codigo} onChange={(e) => setCodigo(e.target.value)} placeholder={generarCodigo()} className="w-full p-3 rounded-md border border-gray-200 bg-gray-100 text-gray-700 shadow-sm" />
+                <p className="text-xs text-gray-500 mt-1">Si dejas vacío, se generará automáticamente.</p>
               </div>
 
-              {/* Origen */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Origen</label>
-                <select
-                  value={origen}
-                  onChange={(e) => {
-                    setOrigen(e.target.value);
-                    setDestino("");
-                  }}
-                  className="w-full p-3 rounded-md border border-gray-200 bg-white text-gray-700 shadow-sm focus:ring-2 focus:ring-[#003b5eff]"
-                >
+                <select value={origen} onChange={(e) => { setOrigen(e.target.value); if (e.target.value === destino) setDestino(""); }} className="w-full p-3 rounded-md border border-gray-200 bg-white text-gray-700 shadow-sm focus:ring-2 focus:ring-[#003b5eff]">
                   <option value="">Seleccione origen</option>
-                  {ciudadesOrigen.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
+                  {ciudadesOrigen.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
 
-              {/* Destino */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Destino</label>
-                <select
-                  value={destino}
-                  onChange={(e) => setDestino(e.target.value)}
-                  className="w-full p-3 rounded-md border border-gray-200 bg-white text-gray-700 shadow-sm focus:ring-2 focus:ring-[#003b5eff]"
-                >
+                <select value={destino} onChange={(e) => setDestino(e.target.value)} className="w-full p-3 rounded-md border border-gray-200 bg-white text-gray-700 shadow-sm focus:ring-2 focus:ring-[#003b5eff]">
                   <option value="">Seleccione destino</option>
-                  {ciudadesDestino.filter((c) => c !== origen).map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
+                  {ciudadesDestino.filter((c) => c !== origen).map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
 
-                            {/* Hora salida */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Hora de salida</label>
-                <input type="datetime-local" value={horaSalida}
-                  min={moment().add(3, "hours").format("YYYY-MM-DDTHH:mm")}
-                  max={moment().add(6, "months").format("YYYY-MM-DDTHH:mm")}
-                  onChange={(e) => {
-                    const seleccionada = moment(e.target.value);
-                    const minPermitido = moment().add(3, "hours");
-                    const maxPermitido = moment().add(6, "months");
-
-                    if (seleccionada.isBefore(minPermitido)) {
-                      alert("⚠️ La salida debe ser al menos 3 horas después de la hora actual");
-                      return;
-                    }
-                    if (seleccionada.isAfter(maxPermitido)) {
-                      alert("⚠️ La salida no puede ser más de 6 meses después");
-                      return;
-                    }
-
-                    setHoraSalida(e.target.value);
-                  }}
-                  className="w-full p-3 rounded-md border border-gray-200 bg-white text-gray-700 shadow-sm focus:ring-2 focus:ring-[#003b5eff]"
-                />
+                <input type="datetime-local" value={horaSalida} min={moment().add(3, "hours").format("YYYY-MM-DDTHH:mm")} max={moment().add(6, "months").format("YYYY-MM-DDTHH:mm")} onChange={(e) => setHoraSalida(e.target.value)} className="w-full p-3 rounded-md border border-gray-200 bg-white text-gray-700 shadow-sm focus:ring-2 focus:ring-[#003b5eff]" />
+                <p className="text-xs text-gray-500 mt-1">La salida debe ser al menos 3 horas desde ahora.</p>
               </div>
 
-
-              {/* Hora llegada */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Hora de llegada (Ciudad destino)</label>
-                <input
-                  type="datetime-local"
-                  value={horaLlegada}
-                  readOnly
-                  className="w-full p-3 rounded-md border border-gray-200 bg-gray-100 text-gray-700 shadow-sm"
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Hora de llegada (local destino)</label>
+                <input type="datetime-local" value={horaLlegada} readOnly className="w-full p-3 rounded-md border border-gray-200 bg-gray-100 text-gray-700 shadow-sm" />
               </div>
 
-              {/* Botón */}
-              <button type="submit" className="w-full py-3 rounded-md text-white font-medium bg-[#003b5eff] hover:bg-[#005f8a]">
-                Crear vuelo
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Duración</label>
+                  <input value={duracionMin != null ? `${Math.floor(duracionMin / 60)} h ${duracionMin % 60} min` : "-"} readOnly className="w-full p-3 rounded-md border border-gray-200 bg-gray-100 text-gray-700 shadow-sm" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Costo base (COP)</label>
+                  <input type="number" value={costoBase} onChange={(e) => setCostoBase(Number(e.target.value || 0))} className="w-full p-3 rounded-md border border-gray-200 bg-white text-gray-700 shadow-sm" />
+                </div>
+              </div>
+
+              <button disabled={loading} type="submit" className="w-full py-3 rounded-md text-white font-medium bg-[#003b5eff] hover:bg-[#005f8a]">
+                {loading ? "Creando..." : "Crear vuelo"}
               </button>
             </form>
           </div>

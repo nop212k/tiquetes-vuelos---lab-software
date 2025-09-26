@@ -1,3 +1,4 @@
+//backend/src/schemas/flight.schema.ts
 import * as z from "zod";
 
 export const createFlightSchema = z.object({

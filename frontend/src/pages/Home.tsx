@@ -1,3 +1,4 @@
+""//frontend/src/pages/Home.tsx
 import React, { useEffect, useState } from 'react';
 import Navbar from '../components/Navbar';
 import SearchForm from '../components/SearchForm';
@@ -78,15 +79,14 @@ const Home: React.FC = () => {
         {/* CONTENIDO SOBRE LA IMAGEN */}
         <div className="hero__content" role="main" aria-label="Portada principal">
           <div className="hero__text">
-            <h1 className="hero__title">Vamos lentos, ¡jóvenes!</h1>
-            <p className="hero__subtitle">Encuentra el vuelo perfecto al mejor precio.</p>
+            <h1 className="hero__title">¡Bienvenido a Pearl Airlines!</h1>
           </div>
 
           {promoVisible && (
             <div className="promo" role="region" aria-label="Promoción especial">
               <div className="promo__left">
                 <span className="promo__tag">Oferta limitada</span>
-                <h3 className="promo__title">¡Bienvenido a Pearl Airlines!</h3>
+                <h3 className="promo__title">Encuentra el vuelo perfecto!</h3>
                 <p className="promo__subtitle">
                   15% OFF en rutas seleccionadas — usa el cupón <strong>VUELO15</strong>
                 </p>

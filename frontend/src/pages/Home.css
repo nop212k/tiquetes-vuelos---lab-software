@@ -1,3 +1,4 @@
+/*frontend/src/pages/Home.css*-
 /* ---------- HERO (imagen + overlay) ---------- */
 .hero {
   position: relative;
@@ -202,6 +203,7 @@
   min-width:105px;
   padding:0.55rem 0.9rem;
 }
+
 
 /* responsive: todo debe quedar dentro de la imagen y acomodarse */
 @media (max-width: 900px) {

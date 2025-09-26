@@ -54,15 +54,38 @@ export async function authMiddleware(req: AuthRequest, res: Response, next: Next
 export function isAdmin(req: AuthRequest, res: Response, next: NextFunction) {
   const user = req.user;
   const payload = req.tokenPayload ?? {};
+  console.log("isAdmin check => user.tipo:", (user as any)?.tipo, "tokenPayload:", payload, "path:", req.path);
+
   if (!user) return res.status(401).json({ message: "Not authenticated" });
-
-  // normalizamos: trim + lowercase
   const tipo = (user as any).tipo ? String((user as any).tipo).trim().toLowerCase() : "";
-  if (tipo === "admin") return next();
+  if (tipo === "admin" || tipo === "root") {
+    console.log("isAdmin: allowed by DB tipo", tipo);
+    return next();
+  }
 
-  // fallback: revisar role en token
-  if (typeof payload.role === "string" && payload.role.trim().toLowerCase() === "admin") return next();
+  // revisar claim role en token
+  if (typeof payload.role === "string" && payload.role.trim().toLowerCase() === "admin") {
+    console.log("isAdmin: allowed by token role");
+    return next();
+  }
 
+  // fallback: revisar header token decode
+  try {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      const raw = authHeader.split(" ")[1];
+      const decoded = jwt.decode(raw) as any;
+      const roleClaim = decoded?.role ?? decoded?.tipo ?? decoded?.tipoUsuario ?? null;
+      if (String(roleClaim).toLowerCase() === "admin" || String(roleClaim).toLowerCase() === "root") {
+        console.log("isAdmin: allowed by decoded token claim");
+        return next();
+      }
+    }
+  } catch (err) {
+    // ignore
+  }
+
+  console.log("isAdmin: forbidden - requires admin role. user.tipo:", tipo, "token.role:", payload?.role);
   return res.status(403).json({ message: "Requires admin role" });
 }
 

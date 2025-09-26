@@ -12,6 +12,7 @@ import { errorHandler } from "./middleware/errorHandler";;
 import cityRoutes from "./routes/cityCountries";
 
 
+
 const app = express();
 const PORT = process.env.PORT || 8000;
 
@@ -25,6 +26,7 @@ app.use('/api', authRoutes);
 app.use('/api/cities', cityRoutes);
 app.use("/uploads", express.static("uploads"));
 app.use('/api/flights', vuelosRoutes);
+
 app.use('/api', rootRoutes);
 
 app.use('/api', authMiddleware, isRoot, rootRoutes);

@@ -12,6 +12,8 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import ProtectedRoute from "./components/ProtectedRoute";
 import CrearVuelosForm from "./components/admin/CrearVuelosForm";
+import SearchForm from "./components/SearchForm";
+import Footer from "./components/Footer";
 import { useEffect } from "react";
 
 function App() {
@@ -36,6 +38,7 @@ function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="*" element={<Navigate to="/" replace />} />
         <Route path="/crear-vuelos" element={<ProtectedRoute requiredRole="admin"><CrearVuelosForm /></ProtectedRoute>}/>
+        <Route path="/search" element={<SearchForm />} />
       </Routes>
     </Router>
   );
