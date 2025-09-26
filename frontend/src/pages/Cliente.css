@@ -1,0 +1,176 @@
+/* Fondo general */
+.cliente-main {
+  background: linear-gradient(180deg, #0b1c2c 0%, #134e4a 100%);
+  min-height: calc(100vh - 120px);
+  padding: 2rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Encabezado */
+.cliente-header {
+  text-align: center;
+  color: #fff;
+  margin-bottom: 2rem;
+}
+.cliente-header h1 {
+  font-size: 2rem;
+  margin: 0;
+  font-weight: 800;
+}
+.cliente-header p {
+  margin: 0.5rem 0 0;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Grid de dashboard */
+.cliente-dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 1200px;
+}
+
+/* Tarjetas */
+.card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 8px 24px rgba(6, 12, 34, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(6px) saturate(120%);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 36px rgba(6, 12, 34, 0.25);
+}
+.card h2 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+  color: #023e8a;
+}
+
+/* Card especial para buscador */
+.card--wide {
+  grid-column: span 2;
+}
+@media (max-width: 768px) {
+  .card--wide {
+    grid-column: span 1;
+  }
+}
+
+/* Listas */
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.list li {
+  padding: 0.6rem 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+.list li.reservado { color: #e67e22; font-weight: 600; }
+.list li.comprado { color: #16a34a; font-weight: 600; }
+.list li.cancelado { color: #e63946; font-weight: 600; }
+
+/* Botones generales */
+.btn {
+  display: inline-block;
+  margin-top: 0.8rem;
+  padding: 0.55rem 1.2rem;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #0b4f6c, #07607a);
+  color: #fff;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.btn:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(180deg, #07607a, #0b4f6c);
+}
+.btn--secondary {
+  background: #fff;
+  color: #07607a;
+  border: 2px solid #07607a;
+}
+.btn--secondary:hover {
+  background: #07607a;
+  color: #fff;
+}
+
+/* === Tarjetas de vuelos === */
+.flights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.flight-card {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 1.2rem 1.5rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-left: 6px solid #0ea5e9; /* borde azul tipo aerolínea */
+}
+
+.flight-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.flight-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.8rem;
+}
+
+.flight-route {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.flight-code {
+  font-size: 0.9rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.flight-info {
+  font-size: 0.95rem;
+  color: #334155;
+  margin: 0.2rem 0;
+}
+
+.flight-price {
+  margin-top: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0b4f6c;
+}
+
+.flight-actions {
+  margin-top: 0.8rem;
+  display: flex;
+  gap: 0.6rem;
+}
+
+.flight-card .btn {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
