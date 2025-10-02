@@ -61,8 +61,13 @@ function computeDuration(horaInicio?: string, horaFin?: string, fallbackMins?: n
 function formatCOP(value?: string | number) {
   const n = Number(value);
   if (isNaN(n)) return "-";
-  return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP" }).format(n);
+  return new Intl.NumberFormat("es-CO", { 
+    style: "currency", 
+    currency: "COP", 
+    currencyDisplay: "code"   // muestra "COP" en lugar de solo "$"
+  }).format(n);
 }
+
 
 function badgeForEstado(estado?: string) {
   const e = (estado || "programado").toLowerCase();
@@ -169,7 +174,7 @@ const Admin: React.FC = () => {
                       </div>
 
                       <div className="text-right">
-                        <div className="text-base font-extrabold text-slate-900">{formatCOP(v.costoBase)}</div>
+                        <div className="text-base font-extrabold text-slate-900 break-words">{formatCOP(v.costoBase)}</div>
                         <div className="mt-2">
                           <span className={`inline-block px-3 py-1 text-xs rounded-full ${badge.className}`}>{badge.label}</span>
                         </div>

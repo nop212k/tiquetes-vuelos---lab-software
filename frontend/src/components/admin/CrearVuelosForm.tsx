@@ -77,7 +77,7 @@ const CrearVuelosForm: React.FC<{ onVuelosCreados?: () => void }> = ({ onVuelosC
   const [horaSalida, setHoraSalida] = useState("");      // datetime-local: YYYY-MM-DDTHH:mm
   const [horaLlegada, setHoraLlegada] = useState("");    // computed datetime-local
   const [duracionMin, setDuracionMin] = useState<number | null>(null);
-  const [costoBase, setCostoBase] = useState<number>(100000);
+  const [costoBase, setCostoBase] = useState<string>("100000");
   const [loading, setLoading] = useState(false);
 
   function generarCodigo() {
@@ -135,6 +135,20 @@ const CrearVuelosForm: React.FC<{ onVuelosCreados?: () => void }> = ({ onVuelosC
     // horaLlegada (según schema: "timestamp completo en UTC")
     const horaLlegadaUTC = llegadaUtcIso; // ya es ISO UTC
 
+    // Validación de precio
+    const precioNum= Number(costoBase);
+
+    if (!Number.isInteger((precioNum))) {
+    alert("El precio debe ser un número entero (sin decimales).");
+      return;
+    }
+
+    if (isNaN(precioNum) || precioNum < 45000) {
+    alert("El precio mínimo permitido es 45,000 COP.");
+      return;
+    }
+
+
     const payload = {
       codigoVuelo: codigo.trim() || generarCodigo(),
       // campos EXACTOS que pide createFlightSchema
@@ -144,7 +158,7 @@ const CrearVuelosForm: React.FC<{ onVuelosCreados?: () => void }> = ({ onVuelosC
       tiempoVuelo: Number(duracionMinutos),  // minutos, entero >=1
       esInternacional: destinosInternacionales.has(destino),
       horaLlegada: horaLlegadaUTC,           // ISO UTC (string)
-      costoBase: Number(costoBase),
+      costoBase: precioNum,
       estado: "programado"
     };
 
@@ -240,7 +254,7 @@ const CrearVuelosForm: React.FC<{ onVuelosCreados?: () => void }> = ({ onVuelosC
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Costo base (COP)</label>
-                  <input type="number" value={costoBase} onChange={(e) => setCostoBase(Number(e.target.value || 0))} className="w-full p-3 rounded-md border border-gray-200 bg-white text-gray-700 shadow-sm" />
+                  <input type="number" min={45000} step={1} value={costoBase} onChange={(e) => setCostoBase(e.target.value)} className="w-full p-3 rounded-md border border-gray-200 bg-white text-gray-700 shadow-sm" />
                 </div>
               </div>
 
