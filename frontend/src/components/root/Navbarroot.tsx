@@ -9,10 +9,18 @@ const Navbar: React.FC = () => {
     navigate("/");                // 👈 redirige a Home
   };
 
+  const handleCAdmind = () => {
+    localStorage.removeItem("token"); // 👈 limpia el token
+    navigate("/registro-admin"); // 👈 redirige a Home
+  };
+
   return (
     <nav className="bg-gradient-to-r from-[#005f7f] to-[#003b5eff] p-4 flex justify-between items-center">
       <div className="flex space-x-10">
-         <Link to="/foroAdmin" className="text-white hover:underline cursor-pointer">Foro</Link>      
+         <Link to="/foroAdmin" className="text-white hover:underline cursor-pointer">Foro</Link>
+        <button onClick={handleCAdmind}
+            className="bg-transparent border-none text-white hover:underline cursor-pointer appearance-none p-0">
+          Registrar Administrador</button>      
           {/* Botón de cerrar sesión */}
           <button onClick={handleLogout}
             className="bg-transparent border-none text-white hover:underline cursor-pointer appearance-none p-0">

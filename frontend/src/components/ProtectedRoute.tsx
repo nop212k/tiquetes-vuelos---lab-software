@@ -84,11 +84,17 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
   if (!isAuthenticated && !isLoading) {
     return <Navigate to="/login" replace />;
   }
-
+  
+  // Si está autenticado pero no tiene el rol requerido
   if (requiredRole && !hasRequiredRole && !isLoading) {
-    return <Navigate to="/" replace />;
+    if (requiredRole === 'root') {
+      return <Navigate to="/root" replace />;
+    } else if (requiredRole === 'admin') {
+      return <Navigate to="/admin" replace />;
+    } else {
+      return <Navigate to="/" replace />;
+    }
   }
-
   return <>{children}</>;
 };
 

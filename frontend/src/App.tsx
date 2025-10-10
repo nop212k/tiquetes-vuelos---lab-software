@@ -2,6 +2,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Home from "./pages/Home";
 import RegisterPage from "./pages/Registro";
+import RegisterAdmin from "./pages/RegistroAdmin";
 import LoginPage from "./pages/Login";
 import Cliente from "./pages/Cliente";
 import Root from "./pages/Root"; 
@@ -30,6 +31,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/registro" element={<RegisterPage />} />
+        <Route path="/registro-admin" element={<RegisterAdmin />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/cliente" element={<ProtectedRoute requiredRole="cliente"><Cliente /></ProtectedRoute>}/>
         <Route path="/root" element={<ProtectedRoute requiredRole="root"><Root /></ProtectedRoute>}/>

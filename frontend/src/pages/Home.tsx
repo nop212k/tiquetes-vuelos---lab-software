@@ -127,7 +127,7 @@ const Home: React.FC = () => {
           )}
 
           <div className="search-card" role="region" aria-label="Buscador de vuelos">
-            <h2 className="search-card__heading">Busca tus vuelos</h2>
+            <h2 className="search-card__heading">¿A donde quieres ir?</h2>
             <SearchForm />
           </div>
         </div>

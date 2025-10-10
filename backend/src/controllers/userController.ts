@@ -61,8 +61,8 @@ export const createUser = async (req: Request, res: Response) => {
     newUser.usuario = usuario;
     newUser.contrasena = await bcrypt.hash(contrasena, 10);
     
-    // Aquí aseguramos que siempre sea cliente
-    newUser.tipo = "cliente";
+    // Aquí aseguramos que siempre sea cliente o admin
+    newUser.tipo = (req.body.tipo === "admin") ? "admin" : "cliente";
 
     await userRepository.save(newUser);
 

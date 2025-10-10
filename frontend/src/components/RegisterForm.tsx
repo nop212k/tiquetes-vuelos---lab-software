@@ -4,6 +4,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
+
 
 // ====================== SCHEMA DE VALIDACIÓN ======================
 const registerSchema = z
@@ -86,8 +88,14 @@ const maxDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDa
 const minDate = new Date(today.getFullYear() - 100, today.getMonth(), today.getDate());
 const formatDate = (d: Date) => d.toISOString().split("T")[0];
 
+//=======================INTERFAZ===========================
+
+interface RegisterFormProps {
+  isRoot?: boolean;
+}
+
 // ====================== COMPONENTE ======================
-export default function RegisterForm() {
+export default function RegisterForm({ isRoot = false }: RegisterFormProps) {
   const {
     register,
     handleSubmit,
@@ -103,6 +111,8 @@ export default function RegisterForm() {
   const [fotoFile, setFotoFile] = useState<File | null>(null);
   const [fotoName, setFotoName] = useState<string | null>(null);
   const contrasena = watch("contrasena") || "";
+  const navigate = useNavigate();
+
 
   // ====================== CIUDADES ======================
   const [ciudades, setCiudades] = useState<Ciudad[]>([]);
@@ -171,16 +181,25 @@ export default function RegisterForm() {
       });
       if (fotoFile) formData.append("foto", fotoFile);
 
-      const res = await fetch(`${import.meta.env.VITE_API_BASE || "http://localhost:8000"}/api/users/register`, {
+      const base = import.meta.env.VITE_API_BASE || "http://localhost:8000";
+      const endpoint = isRoot ? `${base}/api/users/register-root` : `${base}/api/users/register`;
+
+      const res = await fetch(endpoint, {
         method: "POST",
         body: formData,
+        headers: isRoot ? { Authorization: `Bearer ${localStorage.getItem("token")}` } : {},
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ message: "Error en registro" }));
         throw new Error(err.message || "Error en registro");
       }
-      toast.success("Registro exitoso 🎉");
-      window.location.href = "/login";
+      if (isRoot) {
+        toast.success("Administrador registrado correctamente 🎉");
+        setTimeout(() => navigate("/root"), 2000); // pequeño delay para que el toast aparezca
+      } else {
+        toast.success("Registro exitoso 🎉");
+        setTimeout(() => navigate("/login"), 2000);
+      }
     } catch (err: any) {
       toast.error(err?.message || "Error al registrar");
     }
