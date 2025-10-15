@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import Navbar from "../components/admin/NavbarAdmin";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
@@ -77,6 +78,7 @@ function badgeForEstado(estado?: string) {
 }
 
 const Admin: React.FC = () => {
+  const navigate = useNavigate();
   const [vuelos, setVuelos] = useState<Vuelo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -215,7 +217,7 @@ const Admin: React.FC = () => {
                         </button>
 
                         <button
-                          onClick={() => (window.location.href = `/crear-vuelos?edit=${v.id}`)}
+                          onClick={() => navigate(`/editar-vuelo/${v.id}`)}
                           className="px-3 py-2 rounded-md bg-amber-400 text-slate-900 hover:bg-amber-500 text-sm"
                         >
                           Editar
@@ -289,7 +291,7 @@ const Admin: React.FC = () => {
 
               <div className="mt-6 flex justify-end gap-3">
                 <button onClick={() => setSelected(null)} className="px-4 py-2 rounded-md border">Cerrar</button>
-                <button onClick={() => (window.location.href = `/crear-vuelos?edit=${selected.id}`)} className="px-4 py-2 rounded-md bg-[#003b5e] text-white">Editar</button>
+                <button onClick={() => {if (selected) navigate(`/editar-vuelo/${selected.id}`);}} className="px-4 py-2 rounded-md bg-[#003b5e] text-white">Editar</button>
               </div>
             </div>
           </div>
