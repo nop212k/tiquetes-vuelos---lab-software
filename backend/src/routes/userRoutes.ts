@@ -23,6 +23,13 @@ const upload = multer({ storage });
 // registrar usuario con foto
 router.post("/register", upload.single("foto"), createUser);
 
+// registrar usuario root (admin)
+router.post("/register-root", upload.single("foto"), (req, res, next) => {
+  // inyectamos tipo "admin" antes de pasar al controlador
+  (req as any).body.tipo = "admin";
+  createUser(req, res);
+});
+
 // obtener usuario actual (protegido)
 router.get("/me", authMiddleware, getMe);
 

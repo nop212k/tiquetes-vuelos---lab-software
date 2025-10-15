@@ -2,6 +2,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Home from "./pages/Home";
 import RegisterPage from "./pages/Registro";
+import RegisterAdmin from "./pages/RegistroAdmin";
 import LoginPage from "./pages/Login";
 import Cliente from "./pages/Cliente";
 import Root from "./pages/Root"; 
@@ -13,6 +14,7 @@ import ResetPassword from "./pages/ResetPassword";
 import ProtectedRoute from "./components/ProtectedRoute";
 import CrearVuelosForm from "./components/admin/CrearVuelosForm";
 import SearchForm from "./components/SearchForm";
+import EditarVueloForm from "./components/admin/EditarVueloForm";
 import Footer from "./components/Footer";
 import { useEffect } from "react";
 
@@ -30,6 +32,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/registro" element={<RegisterPage />} />
+        <Route path="/registro-admin" element={<RegisterAdmin />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/cliente" element={<ProtectedRoute requiredRole="cliente"><Cliente /></ProtectedRoute>}/>
         <Route path="/root" element={<ProtectedRoute requiredRole="root"><Root /></ProtectedRoute>}/>
@@ -39,6 +42,7 @@ function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
         <Route path="/crear-vuelos" element={<ProtectedRoute requiredRole="admin"><CrearVuelosForm /></ProtectedRoute>}/>
         <Route path="/search" element={<SearchForm />} />
+        <Route path="/editar-vuelo/:id" element={<ProtectedRoute requiredRole="admin"><EditarVueloForm /></ProtectedRoute>}/>
       </Routes>
     </Router>
   );
