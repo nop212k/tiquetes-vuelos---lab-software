@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Navbar from "../admin/NavbarAdmin";
 import moment from "moment-timezone";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
@@ -32,20 +32,19 @@ const zonasHorarias: Record<string, string> = {
 const destinosInternacionales = new Set(["Madrid", "Londres", "New York", "Buenos Aires", "Miami"]);
 
 function calcularLlegadaYDuracion(origen: string, destino: string, horaSalidaISO: string) {
-  // horaSalidaISO => "YYYY-MM-DDTHH:mm" (datetime-local)
   const salidaLocal = moment.tz(horaSalidaISO, "YYYY-MM-DDTHH:mm", "America/Bogota");
   if (!salidaLocal.isValid()) return null;
 
   const distancia = distancias[destino] ?? 300;
   let duracionHoras = distancia / 900;
   if (origen !== "Bogotá") duracionHoras += 0.2;
-  const duracionMinutos = Math.max(1, Math.round(duracionHoras * 60)); // al menos 1
+  const duracionMinutos = Math.max(1, Math.round(duracionHoras * 60));
 
   const llegadaUTC = salidaLocal.clone().add(duracionMinutos, "minutes").utc();
   const zonaDestino = destinosInternacionales.has(destino) ? (zonasHorarias[destino] ?? "UTC") : "America/Bogota";
   const llegadaLocalDestino = salidaLocal.clone().add(duracionMinutos, "minutes").tz(zonaDestino);
 
-  const llegadaLocalForInput = llegadaLocalDestino.format("YYYY-MM-DDTHH:mm"); // para mostrar
+  const llegadaLocalForInput = llegadaLocalDestino.format("YYYY-MM-DDTHH:mm");
   const llegadaUtcIso = llegadaUTC.toISOString();
   const salidaUtcIso = salidaLocal.clone().utc().toISOString();
 
@@ -71,11 +70,17 @@ function decodeJwtPayload(token: string | null) {
 
 const CrearVuelosForm: React.FC<{ onVuelosCreados?: () => void }> = ({ onVuelosCreados }) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const editId = searchParams.get("edit"); // Detecta ?edit=123
+
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [loadingVuelo, setLoadingVuelo] = useState(false);
+
   const [codigo, setCodigo] = useState("");
   const [origen, setOrigen] = useState("");
   const [destino, setDestino] = useState("");
-  const [horaSalida, setHoraSalida] = useState("");      // datetime-local: YYYY-MM-DDTHH:mm
-  const [horaLlegada, setHoraLlegada] = useState("");    // computed datetime-local
+  const [horaSalida, setHoraSalida] = useState("");
+  const [horaLlegada, setHoraLlegada] = useState("");
   const [duracionMin, setDuracionMin] = useState<number | null>(null);
   const [costoBase, setCostoBase] = useState<string>("100000");
   const [loading, setLoading] = useState(false);
@@ -85,30 +90,107 @@ const CrearVuelosForm: React.FC<{ onVuelosCreados?: () => void }> = ({ onVuelosC
     return `AV${now}`;
   }
 
+  // CARGAR VUELO SI ESTAMOS EN MODO EDICIÓN
   useEffect(() => {
-    setCodigo(generarCodigo());
-  }, []);
+    if (editId) {
+      setIsEditMode(true);
+      cargarVuelo(editId);
+    } else {
+      setIsEditMode(false);
+      setCodigo(generarCodigo());
+    }
+  }, [editId]);
 
+  const cargarVuelo = async (id: string) => {
+    setLoadingVuelo(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get(`${API_BASE}/api/flights/${id}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      
+      // Extraer el vuelo (puede estar en res.data directamente o en res.data.vuelo)
+      const vuelo = res.data.vuelo || res.data;
+      console.log("🔍 DATOS COMPLETOS DEL BACKEND:", JSON.stringify(vuelo, null, 2));
+
+      // Pre-llenar el formulario
+      const codigoVuelo = vuelo.codigoVuelo || vuelo.codigo || "";
+      console.log("📝 Código:", codigoVuelo);
+      setCodigo(codigoVuelo);
+
+      const origenVuelo = vuelo.origen || "";
+      console.log("📝 Origen:", origenVuelo);
+      setOrigen(origenVuelo);
+
+      const destinoVuelo = vuelo.destino || "";
+      console.log("📝 Destino:", destinoVuelo);
+      setDestino(destinoVuelo);
+      
+      // Convertir horaSalida del backend a formato datetime-local
+      let horaSalidaLocal = "";
+      console.log("🕐 horaSalida del backend:", vuelo.horaSalida);
+      console.log("🕐 fecha del backend:", vuelo.fecha);
+      console.log("🕐 hora del backend:", vuelo.hora);
+
+      if (vuelo.horaSalida) {
+        horaSalidaLocal = moment(vuelo.horaSalida).tz("America/Bogota").format("YYYY-MM-DDTHH:mm");
+      } else if (vuelo.hora) {
+        horaSalidaLocal = moment(vuelo.hora).tz("America/Bogota").format("YYYY-MM-DDTHH:mm");
+      } else if (vuelo.fecha) {
+        horaSalidaLocal = moment(vuelo.fecha).tz("America/Bogota").format("YYYY-MM-DDTHH:mm");
+      }
+      console.log("📝 Hora salida formateada:", horaSalidaLocal);
+      setHoraSalida(horaSalidaLocal);
+
+      // horaLlegada local para mostrar
+      if (vuelo.horaLlegada) {
+        const zonaDestino = destinosInternacionales.has(vuelo.destino) 
+          ? (zonasHorarias[vuelo.destino] ?? "UTC") 
+          : "America/Bogota";
+        const llegadaLocal = moment(vuelo.horaLlegada).tz(zonaDestino).format("YYYY-MM-DDTHH:mm");
+        console.log("📝 Hora llegada formateada:", llegadaLocal);
+        setHoraLlegada(llegadaLocal);
+      }
+
+      const duracion = vuelo.tiempoVuelo || vuelo.duracion || null;
+      console.log("📝 Duración (minutos):", duracion);
+      setDuracionMin(duracion);
+
+      const costo = String(vuelo.costoBase || vuelo.precio || "100000");
+      console.log("📝 Costo base:", costo);
+      setCostoBase(costo);
+
+      console.log("✅ FORMULARIO LLENADO CORRECTAMENTE");
+
+    } catch (err: any) {
+      console.error("❌ Error cargando vuelo para editar:", err);
+      console.error("Respuesta del servidor:", err?.response?.data);
+      alert("Error al cargar el vuelo. Verifica que existe y tienes permisos.");
+      navigate("/admin");
+    } finally {
+      setLoadingVuelo(false);
+    }
+  };
+
+  // Recalcular llegada cuando cambian origen/destino/salida
   useEffect(() => {
-    if (!origen || !destino || !horaSalida) {
-      setHoraLlegada("");
-      setDuracionMin(null);
+    if (!isEditMode || !origen || !destino || !horaSalida) {
+      if (!isEditMode) {
+        setHoraLlegada("");
+        setDuracionMin(null);
+      }
       return;
     }
     const res = calcularLlegadaYDuracion(origen, destino, horaSalida);
     if (res) {
       setHoraLlegada(res.llegadaLocalForInput);
       setDuracionMin(res.duracionMinutos);
-    } else {
-      setHoraLlegada("");
-      setDuracionMin(null);
     }
-  }, [origen, destino, horaSalida]);
+  }, [origen, destino, horaSalida, isEditMode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // validación básica cliente
     if (!origen || !destino) { alert("Selecciona origen y destino."); return; }
     if (!horaSalida) { alert("Selecciona fecha y hora de salida."); return; }
     if (duracionMin == null || duracionMin < 1) { alert("No se pudo calcular correctamente la duración."); return; }
@@ -123,80 +205,90 @@ const CrearVuelosForm: React.FC<{ onVuelosCreados?: () => void }> = ({ onVuelosC
       return;
     }
 
-    // recalcula por seguridad
     const calc = calcularLlegadaYDuracion(origen, destino, horaSalida);
     if (!calc) { alert("Error calculando llegada/duración."); return; }
 
     const { duracionMinutos, llegadaUtcIso } = calc;
-
-    // Nota: el backend espera 'hora' con formato "YYYY-MM-DDTHH:mm" (min length 16)
     const horaFormatoSchema = moment(horaSalida).format("YYYY-MM-DDTHH:mm");
+    const horaLlegadaUTC = llegadaUtcIso;
+    const precioNum = Number(costoBase);
 
-    // horaLlegada (según schema: "timestamp completo en UTC")
-    const horaLlegadaUTC = llegadaUtcIso; // ya es ISO UTC
-
-    // Validación de precio
-    const precioNum= Number(costoBase);
-
-    if (!Number.isInteger((precioNum))) {
-    alert("El precio debe ser un número entero (sin decimales).");
+    if (!Number.isInteger(precioNum)) {
+      alert("El precio debe ser un número entero (sin decimales).");
       return;
     }
 
     if (isNaN(precioNum) || precioNum < 45000) {
-    alert("El precio mínimo permitido es 45,000 COP.");
+      alert("El precio mínimo permitido es 45,000 COP.");
       return;
     }
 
-
     const payload = {
       codigoVuelo: codigo.trim() || generarCodigo(),
-      // campos EXACTOS que pide createFlightSchema
-      hora: horaFormatoSchema,               // e.g. "2025-09-27T14:30" (16 chars)
+      hora: horaFormatoSchema,
       origen,
       destino,
-      tiempoVuelo: Number(duracionMinutos),  // minutos, entero >=1
+      tiempoVuelo: Number(duracionMinutos),
       esInternacional: destinosInternacionales.has(destino),
-      horaLlegada: horaLlegadaUTC,           // ISO UTC (string)
+      horaLlegada: horaLlegadaUTC,
       costoBase: precioNum,
       estado: "programado"
     };
 
-    console.log("Payload a enviar a /api/flights/admin:", payload);
+    console.log(isEditMode ? "Actualizando vuelo:" : "Creando vuelo:", payload);
     setLoading(true);
+
     try {
       const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
-      const res = await axios.post(`${API_BASE}/api/flights/admin`, payload, { headers });
-      console.log("Respuesta backend:", res.data);
-      alert("✅ Vuelo creado correctamente.");
-      setCodigo(generarCodigo());
-      setOrigen("");
-      setDestino("");
-      setHoraSalida("");
-      setHoraLlegada("");
-      setDuracionMin(null);
+      
+      if (isEditMode && editId) {
+        // ACTUALIZAR (PUT)
+        const res = await axios.put(`${API_BASE}/api/flights/admin/${editId}`, payload, { headers });
+        console.log("Respuesta actualización:", res.data);
+        alert("✅ Vuelo actualizado correctamente.");
+      } else {
+        // CREAR (POST)
+        const res = await axios.post(`${API_BASE}/api/flights/admin`, payload, { headers });
+        console.log("Respuesta creación:", res.data);
+        alert("✅ Vuelo creado correctamente.");
+      }
+
       onVuelosCreados?.();
       navigate("/admin");
+
     } catch (err: any) {
-      console.error("Error creando vuelo (admin):", err?.response?.status, err?.response?.data || err.message);
+      console.error(isEditMode ? "Error actualizando vuelo:" : "Error creando vuelo:", err?.response?.status, err?.response?.data || err.message);
       const status = err?.response?.status;
       const data = err?.response?.data;
+
       if (status === 403) {
-        alert("403 Forbidden: tu usuario no tiene permisos para crear vuelos en /api/flights/admin. Verifica el rol en token y que tu usuario en DB sea 'admin'.");
+        alert("403 Forbidden: No tienes permisos para esta acción.");
       } else if (status === 400) {
-        if (data?.details) {
-          // mostrar detalles de validación para depurar
-          alert("400 Bad Request: " + (data.message || "Datos inválidos") + "\n\n" + JSON.stringify(data.details, null, 2));
-        } else {
-          alert("400 Bad Request: " + JSON.stringify(data));
-        }
+        alert("400 Bad Request: " + (data?.message || JSON.stringify(data)));
+      } else if (status === 404) {
+        alert("404 Not Found: El vuelo no existe.");
       } else {
-        alert("Error creando vuelo. Revisa consola (Network) para ver payload/respuesta.");
+        alert("Error. Revisa la consola del navegador.");
       }
     } finally {
       setLoading(false);
     }
   };
+
+  const handleCancelar = () => {
+    navigate("/admin");
+  };
+
+  if (loadingVuelo) {
+    return (
+      <div>
+        <Navbar />
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-white text-xl">Cargando vuelo...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -212,17 +304,35 @@ const CrearVuelosForm: React.FC<{ onVuelosCreados?: () => void }> = ({ onVuelosC
       >
         <div className="w-full max-w-lg bg-[#09374b] rounded-2xl shadow-xl overflow-hidden">
           <div className="bg-white p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Crear Vuelo</h2>
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">
+              {isEditMode ? "Editar Vuelo" : "Crear Vuelo"}
+            </h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">El código de vuelo sera generado al crear el vuelo</label>
-                
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {isEditMode ? "Código del vuelo" : "El código de vuelo será generado al crear el vuelo"}
+                </label>
+                {isEditMode && (
+                  <input 
+                    type="text" 
+                    value={codigo} 
+                    readOnly 
+                    className="w-full p-3 rounded-md border border-gray-200 bg-gray-100 text-gray-700"
+                  />
+                )}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Origen</label>
-                <select value={origen} onChange={(e) => { setOrigen(e.target.value); if (e.target.value === destino) setDestino(""); }} className="w-full p-3 rounded-md border border-gray-200 bg-white text-gray-700 shadow-sm focus:ring-2 focus:ring-[#003b5eff]">
+                <select 
+                  value={origen} 
+                  onChange={(e) => { 
+                    setOrigen(e.target.value); 
+                    if (e.target.value === destino) setDestino(""); 
+                  }} 
+                  className="w-full p-3 rounded-md border border-gray-200 bg-white text-gray-700 shadow-sm focus:ring-2 focus:ring-[#003b5eff]"
+                >
                   <option value="">Seleccione origen</option>
                   {ciudadesOrigen.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
@@ -230,7 +340,11 @@ const CrearVuelosForm: React.FC<{ onVuelosCreados?: () => void }> = ({ onVuelosC
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Destino</label>
-                <select value={destino} onChange={(e) => setDestino(e.target.value)} className="w-full p-3 rounded-md border border-gray-200 bg-white text-gray-700 shadow-sm focus:ring-2 focus:ring-[#003b5eff]">
+                <select 
+                  value={destino} 
+                  onChange={(e) => setDestino(e.target.value)} 
+                  className="w-full p-3 rounded-md border border-gray-200 bg-white text-gray-700 shadow-sm focus:ring-2 focus:ring-[#003b5eff]"
+                >
                   <option value="">Seleccione destino</option>
                   {ciudadesDestino.filter((c) => c !== origen).map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
@@ -238,29 +352,65 @@ const CrearVuelosForm: React.FC<{ onVuelosCreados?: () => void }> = ({ onVuelosC
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Hora de salida</label>
-                <input type="datetime-local" value={horaSalida} min={moment().add(3, "hours").format("YYYY-MM-DDTHH:mm")} max={moment().add(6, "months").format("YYYY-MM-DDTHH:mm")} onChange={(e) => setHoraSalida(e.target.value)} className="w-full p-3 rounded-md border border-gray-200 bg-white text-gray-700 shadow-sm focus:ring-2 focus:ring-[#003b5eff]" />
+                <input 
+                  type="datetime-local" 
+                  value={horaSalida} 
+                  min={moment().add(3, "hours").format("YYYY-MM-DDTHH:mm")} 
+                  max={moment().add(6, "months").format("YYYY-MM-DDTHH:mm")} 
+                  onChange={(e) => setHoraSalida(e.target.value)} 
+                  className="w-full p-3 rounded-md border border-gray-200 bg-white text-gray-700 shadow-sm focus:ring-2 focus:ring-[#003b5eff]" 
+                />
                 <p className="text-xs text-gray-500 mt-1">La salida debe ser al menos 3 horas desde ahora.</p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Hora de llegada (local destino)</label>
-                <input type="datetime-local" value={horaLlegada} readOnly className="w-full p-3 rounded-md border border-gray-200 bg-gray-100 text-gray-700 shadow-sm" />
+                <input 
+                  type="datetime-local" 
+                  value={horaLlegada} 
+                  readOnly 
+                  className="w-full p-3 rounded-md border border-gray-200 bg-gray-100 text-gray-700 shadow-sm" 
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Duración</label>
-                  <input value={duracionMin != null ? `${Math.floor(duracionMin / 60)} h ${duracionMin % 60} min` : "-"} readOnly className="w-full p-3 rounded-md border border-gray-200 bg-gray-100 text-gray-700 shadow-sm" />
+                  <input 
+                    value={duracionMin != null ? `${Math.floor(duracionMin / 60)} h ${duracionMin % 60} min` : "-"} 
+                    readOnly 
+                    className="w-full p-3 rounded-md border border-gray-200 bg-gray-100 text-gray-700 shadow-sm" 
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Costo base (COP)</label>
-                  <input type="number" min={45000} step={1} value={costoBase} onChange={(e) => setCostoBase(e.target.value)} className="w-full p-3 rounded-md border border-gray-200 bg-white text-gray-700 shadow-sm" />
+                  <input 
+                    type="number" 
+                    min={45000} 
+                    step={1} 
+                    value={costoBase} 
+                    onChange={(e) => setCostoBase(e.target.value)} 
+                    className="w-full p-3 rounded-md border border-gray-200 bg-white text-gray-700 shadow-sm" 
+                  />
                 </div>
               </div>
 
-              <button disabled={loading} type="submit" className="w-full py-3 rounded-md text-white font-medium bg-[#003b5eff] hover:bg-[#005f8a]">
-                {loading ? "Creando..." : "Crear vuelo"}
-              </button>
+              <div className="flex gap-3">
+                <button 
+                  type="button"
+                  onClick={handleCancelar}
+                  className="flex-1 py-3 rounded-md text-gray-700 font-medium bg-gray-200 hover:bg-gray-300"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  disabled={loading} 
+                  type="submit" 
+                  className="flex-1 py-3 rounded-md text-white font-medium bg-[#003b5eff] hover:bg-[#005f8a] disabled:opacity-50"
+                >
+                  {loading ? (isEditMode ? "Actualizando..." : "Creando...") : (isEditMode ? "Actualizar vuelo" : "Crear vuelo")}
+                </button>
+              </div>
             </form>
           </div>
         </div>
