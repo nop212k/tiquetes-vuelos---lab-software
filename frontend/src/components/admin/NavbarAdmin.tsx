@@ -62,6 +62,12 @@ const Navbar: React.FC = () => {
               <Link to="/perfil" className="text-white hover:underline ml-16">Perfil</Link>
               <Link to="/crear-vuelos" className="text-white hover:underline">Crear Vuelos</Link>
               <Link to="/foroAdmin" className="text-white hover:underline cursor-pointer">Foro</Link>      
+              
+              {/* Botón Vuelos Cancelados */}
+              <Link to="/vuelos-cancelados" className="text-white hover:underline cursor-pointer">
+                Vuelos Cancelados
+              </Link>
+
               {/* Botón de cerrar sesión */}
               <button onClick={handleLogout}
                 className="bg-transparent border-none text-white hover:underline cursor-pointer appearance-none p-0">

@@ -135,4 +135,31 @@ export const deleteFlight = async (req: Request, res: Response) => {
     console.error("deleteFlight error:", error);
     return res.status(500).json({ message: "Error eliminando vuelo", error: String(error) });
   }
+
+};
+
+// Cancelar vuelo
+export const cancelFlight = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const vuelo = await repo().findOneBy({ id: Number(id) });
+
+    if (!vuelo) {
+      return res.status(404).json({ message: "Vuelo no encontrado" });
+    }
+
+    // Si ya está cancelado, retornamos aviso
+    if (vuelo.estado === "cancelado") {
+      return res.status(400).json({ message: "El vuelo ya está cancelado" });
+    }
+
+    // Solo cambiamos el estado
+    vuelo.estado = "cancelado";
+    const updated = await repo().save(vuelo);
+
+    return res.json({ message: "Vuelo cancelado correctamente", vuelo: updated });
+  } catch (error) {
+    console.error("cancelFlight error:", error);
+    return res.status(500).json({ message: "Error al cancelar vuelo", error: String(error) });
+  }
 };

@@ -111,6 +111,29 @@ const Admin: React.FC = () => {
 
   useEffect(() => { fetchVuelos(); }, []);
 
+  const handleCancelarVuelo = async (id: number) => {
+  const confirm = window.confirm("¿Seguro que deseas cancelar este vuelo?");
+  if (!confirm) return;
+
+  try {
+    const token = localStorage.getItem("token");
+    await axios.put(`${API_BASE}/api/flights/admin/${id}/cancel`, null, {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    });
+
+    alert("El vuelo ha sido cancelado correctamente.");
+    // Actualizar la lista local sin tener que recargar toda la página:
+    setVuelos(prev =>
+      prev.map(v =>
+        v.id === id ? { ...v, estado: "cancelado" } : v
+      )
+    );
+  } catch (err: any) {
+    console.error("Error cancelando vuelo", err);
+    alert(err?.response?.data?.message || "No se pudo cancelar el vuelo");
+  }
+};
+
   const handleDelete = async (id: number) => {
     if (confirmDeleteId !== id) {
       setConfirmDeleteId(id);
@@ -221,6 +244,13 @@ const Admin: React.FC = () => {
                           className="px-3 py-2 rounded-md bg-amber-400 text-slate-900 hover:bg-amber-500 text-sm"
                         >
                           Editar
+                        </button>
+
+                        <button
+                          onClick={() => handleCancelarVuelo(v.id)}
+                          className="px-3 py-2 rounded-md bg-red-500 text-white hover:bg-red-600 text-sm"
+                        >
+                          Cancelar
                         </button>
 
                         <button

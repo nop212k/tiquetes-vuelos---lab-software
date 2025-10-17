@@ -73,14 +73,20 @@ const EditarVueloForm: React.FC = () => {
     const fetchVuelo = async () => {
       try {
         const res = await axios.get(`${API_BASE}/api/flights/${id}`);
-        const data = res.data;
-        setVuelo(data);
-        setOrigen(data.origen);
-        setDestino(data.destino);
-        setCostoBase(String(data.costoBase || 0));
-        setHoraSalida(moment(data.hora).format("YYYY-MM-DDTHH:mm"));
-        setHoraLlegada(moment(data.horaLlegada).format("YYYY-MM-DDTHH:mm"));
-        setDuracionMin(data.tiempoVuelo);
+        const vueloData = res.data.vuelo || res.data; // soporta ambos formatos
+        if (!vueloData) {
+          console.error("No se encontró el vuelo en la respuesta:", res.data);
+          alert("Error: no se pudo cargar el vuelo.");
+          navigate("/admin");
+          return;
+        }
+        setVuelo(vueloData);
+        setOrigen(vueloData.origen);
+        setDestino(vueloData.destino);
+        setCostoBase(String(vueloData.costoBase || 0));
+        setHoraSalida(moment(vueloData.hora).format("YYYY-MM-DDTHH:mm"));
+        setHoraLlegada(moment(vueloData.horaLlegada).format("YYYY-MM-DDTHH:mm"));
+        setDuracionMin(vueloData.tiempoVuelo ?? null);
       } catch (err) {
         console.error("Error cargando vuelo:", err);
         alert("Error al cargar los datos del vuelo.");

@@ -6,6 +6,7 @@ import {
   getFlightAdmin,
   updateFlight,
   deleteFlight,
+  cancelFlight,
 } from "../controllers/adminVuelosController";
 import { authMiddleware, isAdmin } from "../middleware/authMiddleware";
 import { validateBody } from "../middleware/validateSchema";
@@ -22,5 +23,5 @@ router.post("/admin", authMiddleware, isAdmin, validateBody(createFlightSchema),
 router.put("/admin/:id", authMiddleware, isAdmin, validateBody(createFlightSchema), updateFlight);  // PUT /api/flights/admin/:id
 router.delete("/admin/:id", authMiddleware, isAdmin, deleteFlight);                                // DELETE /api/flights/admin/:id
 router.get("/admin", authMiddleware, isAdmin, listFlightsAdmin);                                   // GET /api/flights/admin
-
+router.patch("/admin/:id/cancel", authMiddleware, isAdmin, cancelFlight); 
 export default router;
