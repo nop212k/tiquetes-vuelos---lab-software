@@ -2,7 +2,7 @@
 /* ---------- HERO (imagen + overlay) ---------- */
 .hero {
   position: relative;
-  min-height: calc(100vh - 120px); /* ajustar a tu Navbar/Footer */
+  min-height: 110vh; /* ajustar a tu Navbar/Footer */
   display: block;
   overflow: hidden;
   padding: 0;

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import Navbar from "../components/root/Navbarroot";
+
 
 const API_URL = "http://localhost:8000/api";
 
@@ -60,8 +60,21 @@ export default function FlightSearch() {
     setError(null);
     setLoading(true);
 
+    // Evitar búsquedas vacías
+    if (!origin && !destination && !date) {
+      setError("Por favor, ingresa al menos un campo para buscar.");
+      setLoading(false);
+      return;
+    }
+
+      // Crear filtros dinámicos (solo los campos llenos)
+    const filters: any = {};
+    if (origin) filters.origin = origin;
+    if (destination) filters.destination = destination;
+    if (date) filters.date = date;
+
     try {
-      const data = await searchFlights({ origin, destination, date });
+      const data = await searchFlights(filters);
       let flights = data.results || data || [];
 
       // --- FILTRO COMPLETO ---
@@ -71,8 +84,9 @@ export default function FlightSearch() {
         const originLower = origin.toLowerCase();
         const destLower = destination.toLowerCase();
 
-        const matchesOrigin = !origin || fOrigin === originLower;
-        const matchesDest = !destination || fDest === destLower;
+        const matchesOrigin = !origin || fOrigin.includes(originLower);
+        const matchesDest = !destination || fDest.includes(destLower);
+        const matchesDate = !date || f.fecha === date;  
 
         const isNational =
           nationalCities.some((c) => c.toLowerCase() === fOrigin) &&
@@ -85,6 +99,7 @@ export default function FlightSearch() {
         return (
           matchesOrigin &&
           matchesDest &&
+          matchesDate &&
           ((flightType === "nacional" && isNational) ||
             (flightType === "internacional" && isInternational))
         );
@@ -112,11 +127,9 @@ export default function FlightSearch() {
     flightType === "nacional" ? nationalCities : internationalDestinations;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-
+    <div className="w-full">
       {/* --- FORMULARIO --- */}
-      <section className="max-w-4xl mx-auto mt-10 bg-white p-8 rounded-2xl shadow">
+      <section className="max-w-3xl mx-auto mt-10 bg-white p-8 rounded-2xl shadow">
         <h1 className="text-2xl font-semibold text-center mb-6">
           Buscar vuelos {flightType === "nacional" ? "nacionales" : "internacionales"}
         </h1>
@@ -166,7 +179,6 @@ export default function FlightSearch() {
               value={destination}
               onChange={(e) => setDestination(e.target.value)}
               className="w-full border border-gray-300 rounded-lg p-2"
-              required
             >
               <option value="">Seleccione destino</option>
               {destinationOptions.map((city) => (
@@ -186,7 +198,6 @@ export default function FlightSearch() {
               value={date}
               onChange={(e) => setDate(e.target.value)}
               className="w-full border border-gray-300 rounded-lg p-2"
-              required
             />
           </div>
 

@@ -83,7 +83,7 @@ const Home: React.FC = () => {
           </div>
 
           {promoVisible && (
-            <div className="promo" role="region" aria-label="Promoción especial">
+            <div className="promo p-20" role="region" aria-label="Promoción especial">
               <div className="promo__left">
                 <span className="promo__tag">Oferta limitada</span>
                 <h3 className="promo__title">Encuentra el vuelo perfecto!</h3>

@@ -3,7 +3,7 @@ const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
 
 export const getUsers = () => fetch(`${API_BASE}/api/users`).then(r => r.json());
 
-function authHeaders(): Record<string, string>  {
+function authHeaders(): Record<string, string> {
   const token = localStorage.getItem("token");
   console.log('Token para autenticación:', token ? 'Presente' : 'No encontrado');
   return token ? { Authorization: `Bearer ${token}` } : {};
@@ -11,9 +11,9 @@ function authHeaders(): Record<string, string>  {
 
 async function parseResponse(res: Response) {
   let data: any = null;
-  try { 
-    data = await res.json(); 
-  } catch (e) { 
+  try {
+    data = await res.json();
+  } catch (e) {
     console.error('Error al parsear respuesta JSON:', e);
   }
 
@@ -29,7 +29,7 @@ async function parseResponse(res: Response) {
   return data;
 }
 
-/* Auth */
+/* ---------- AUTH ---------- */
 export async function postLogin(payload: { login: string; password: string }) {
   const res = await fetch(`${API_BASE}/api/auth/login`, {
     method: "POST",
@@ -42,24 +42,33 @@ export async function postLogin(payload: { login: string; password: string }) {
 export async function postRegister(payload: any) {
   const res = await fetch(`${API_BASE}/api/users/register`, {
     method: "POST",
-    // si envías form-data (foto), no pongas Content-Type aquí
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
   return parseResponse(res);
 }
 
-/* Public flights */
-export async function searchFlights(params: { origin?: string; destination?: string; date?: string; page?: number; limit?: number }) {
-  const qs = new URLSearchParams();
-  if (params.origin) qs.append("origin", params.origin);
-  if (params.destination) qs.append("destination", params.destination);
-  if (params.date) qs.append("date", params.date);
-  if (params.page) qs.append("page", String(params.page || 1));
-  if (params.limit) qs.append("limit", String(params.limit || 20));
+/* ---------- PUBLIC FLIGHTS ---------- */
+export async function searchFlights(params: {
+  origin?: string;
+  destination?: string;
+  date?: string;
+  page?: number;
+  limit?: number;
+}) {
+  // El backend espera un POST con filtros en el body
+  const res = await fetch(`${API_BASE}/api/flights/search`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(params),
+  });
 
-  const res = await fetch(`${API_BASE}/api/flights?${qs.toString()}`);
-  if (!res.ok) throw new Error(`Error buscando vuelos: ${res.status}`);
+  if (!res.ok) {
+    const text = await res.text();
+    console.error('Error en searchFlights:', res.status, text);
+    throw new Error(`Error buscando vuelos: ${res.status}`);
+  }
+
   return res.json();
 }
 
@@ -69,25 +78,25 @@ export async function getFlight(id: number | string) {
   return res.json();
 }
 
-/* GET current user */
+/* ---------- CURRENT USER ---------- */
 export async function getMe() {
   console.log(`Haciendo petición a ${API_BASE}/api/users/me`);
   try {
     const headers = authHeaders();
     console.log('Headers de autenticación:', headers);
-    
+
     const res = await fetch(`${API_BASE}/api/users/me`, {
-      headers: { ...headers }
+      headers: { ...headers },
     });
-    
+
     console.log('Respuesta del servidor:', res.status, res.statusText);
-    
+
     if (!res.ok) {
       const errorData = await res.text();
       console.error('Error en getMe:', res.status, errorData);
       throw new Error(`No autorizado: ${res.status} - ${errorData || res.statusText}`);
     }
-    
+
     const data = await res.json();
     console.log('Datos del usuario:', data);
     return data;
@@ -97,7 +106,7 @@ export async function getMe() {
   }
 }
 
-/* Admin flights */
+/* ---------- ADMIN FLIGHTS ---------- */
 export async function adminListFlights(params: { page?: number; limit?: number; search?: string } = {}) {
   const qs = new URLSearchParams();
   if (params.page) qs.append("page", String(params.page));
@@ -121,7 +130,9 @@ export async function adminCreateFlight(payload: any) {
 }
 
 export async function adminGetFlight(id: number | string) {
-  const res = await fetch(`${API_BASE}/api/flights/admin/${id}`, { headers: { ...authHeaders() } });
+  const res = await fetch(`${API_BASE}/api/flights/admin/${id}`, {
+    headers: { ...authHeaders() },
+  });
   if (!res.ok) throw new Error(`Error obteniendo vuelo admin: ${res.status}`);
   return res.json();
 }
