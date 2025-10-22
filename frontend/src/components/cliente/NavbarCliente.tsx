@@ -1,3 +1,4 @@
+// frontend/src/components/cliente/NavbarCliente.tsx
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -7,7 +8,6 @@ const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 const NavbarCliente: React.FC = () => {
   const navigate = useNavigate();
   const [userName, setUserName] = useState("Cliente");
-  const [userEmail, setUserEmail] = useState("");
   
   useEffect(() => {
     const fetchUser = async () => {
@@ -21,7 +21,6 @@ const NavbarCliente: React.FC = () => {
 
         if (res.data && res.data.user) {
           setUserName(res.data.user.nombres);
-          setUserEmail(res.data.user.email);
         }
       } catch (err) {
         console.error("Error cargando usuario", err);
@@ -44,7 +43,7 @@ const NavbarCliente: React.FC = () => {
       <div className="flex space-x-8 items-center">
         <Link to="/foro" className="text-white hover:underline">Foro</Link>
         <Link to="/noticias" className="text-white hover:underline">Noticias</Link>
-        <Link to="/perfil" className="text-white hover:underline">Perfil</Link>
+        <Link to="/perfil-cliente" className="text-white hover:underline">Perfil</Link>
         <Link to="/historial" className="text-white hover:underline">Historial</Link>
         <Link to="/checkin" className="text-white hover:underline">Check in</Link>
         <button
@@ -60,7 +59,9 @@ const NavbarCliente: React.FC = () => {
         <div
           className="flex items-center space-x-2 bg-gradient-to-r from-[#004a66] to-[#00384d] 
                      px-4 py-1 rounded-full shadow-sm border border-transparent
-                     hover:border-[#f97316] transition"
+                     hover:border-[#f97316] transition cursor-pointer"
+          onClick={() => navigate("/perfil-cliente")}
+          title="Ir a mi perfil"
         >
           <span className="bg-[#0ea5e9] text-white font-bold w-6 h-6 flex items-center justify-center rounded-full">
             {userInitial}

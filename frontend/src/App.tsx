@@ -2,7 +2,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Home from "./pages/Home";
 import RegisterPage from "./pages/Registro";
-import RegisterAdmin from "./pages/RegistroAdmin";
 import LoginPage from "./pages/Login";
 import Cliente from "./pages/Cliente";
 import Root from "./pages/Root"; 
@@ -14,8 +13,9 @@ import ResetPassword from "./pages/ResetPassword";
 import ProtectedRoute from "./components/ProtectedRoute";
 import CrearVuelosForm from "./components/admin/CrearVuelosForm";
 import SearchForm from "./components/SearchForm";
-import EditarVueloForm from "./components/admin/EditarVueloForm";
-import Footer from "./components/Footer";
+import PerfilAdmin from "./pages/PerfilAdmin";
+import PerfilCliente from "./pages/PerfilCliente";
+import PerfilRoot from "./pages/PerfilRoot";
 import { useEffect } from "react";
 
 function App() {
@@ -32,17 +32,28 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/registro" element={<RegisterPage />} />
-        <Route path="/registro-admin" element={<RegisterAdmin />} />
         <Route path="/login" element={<LoginPage />} />
+        
+        {/* Rutas de Cliente */}
         <Route path="/cliente" element={<ProtectedRoute requiredRole="cliente"><Cliente /></ProtectedRoute>}/>
+        <Route path="/perfil-cliente" element={<ProtectedRoute requiredRole="cliente"><PerfilCliente /></ProtectedRoute>}/>
+        
+        {/* Rutas de Root */}
         <Route path="/root" element={<ProtectedRoute requiredRole="root"><Root /></ProtectedRoute>}/>
+        <Route path="/perfil-root" element={<ProtectedRoute requiredRole="root"><PerfilRoot /></ProtectedRoute>}/>
+        
+        {/* Rutas de Admin */}
         <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><Admin /></ProtectedRoute>}/>
+        <Route path="/perfil-admin" element={<ProtectedRoute requiredRole="admin"><PerfilAdmin /></ProtectedRoute>}/>
+        <Route path="/crear-vuelos" element={<ProtectedRoute requiredRole="admin"><CrearVuelosForm /></ProtectedRoute>}/>
+        
+        {/* Rutas públicas */}
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-        <Route path="/crear-vuelos" element={<ProtectedRoute requiredRole="admin"><CrearVuelosForm /></ProtectedRoute>}/>
         <Route path="/search" element={<SearchForm />} />
-        <Route path="/editar-vuelo/:id" element={<ProtectedRoute requiredRole="admin"><EditarVueloForm /></ProtectedRoute>}/>
+        
+        {/* Redireccionar rutas no encontradas */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );
