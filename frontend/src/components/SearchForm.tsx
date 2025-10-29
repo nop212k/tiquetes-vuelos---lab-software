@@ -5,28 +5,14 @@ const API_URL = "http://localhost:8000/api";
 
 // Ciudades nacionales e internacionales
 const nationalCities = [
-  "Bogotá",
-  "Medellín",
-  "Cali",
-  "Cartagena",
-  "Barranquilla",
-  "Pereira",
-  "Santa Marta",
-  "Cúcuta",
-  "Bucaramanga",
-  "Manizales",
-  "Armenia",
-  "Montería",
-];
+  "Leticia","Medellín","Arauca","Barranquilla","Bogotá","Cartagena","Tunja","Manizales","Florencia",
+  "Yopal","Popayán","Valledupar","Quibdó","Montería","Bogotá D.C.","Inírida","San José del Guaviare",
+  "Neiva","Riohacha","Santa Marta","Villavicencio","Pasto","Cúcuta","Mocoa","Armenia","Pereira",
+  "San Andrés","Bucaramanga","Sincelejo","Ibagué","Cali","Mitú","Puerto Carreño"];
 
-const internationalOrigins = ["Bogotá", "Medellín", "Cali"];
-const internationalDestinations = [
-  "Madrid",
-  "Miami",
-  "Ciudad de México",
-  "Panamá",
-  "Buenos Aires",
-];
+
+const internationalOrigins = ["Bogotá", "Medellín", "Cali", "Pereira", "Cartagena"];
+const internationalDestinations = ["Madrid","Miami","Londres","New York","Buenos Aires"];
 
 // Función para buscar vuelos desde el backend
 async function searchFlights(filters: any) {
@@ -235,10 +221,22 @@ export default function FlightSearch() {
                       {flight.origen} → {flight.destino}
                     </p>
                     <p className="text-gray-600">
-                      Fecha: {flight.fecha} — Aerolínea: {flight.aerolinea}
+                      Salida:{" "}
+                      {new Date(flight.hora).toLocaleString("es-CO", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: true,
+                        timeZone: "America/Bogota", // ajusta si tu backend usa UTC
+                      })}
+                      {" "} — Código de vuelo: {flight.codigoVuelo}
                     </p>
+
                   </div>
-                  <p className="text-blue-600 font-semibold">${flight.precio}</p>
+                  <p className="text-blue-600 font-semibold">${Number(flight.costoBase).toLocaleString("es-CO", {
+                      minimumFractionDigits: 2,})}</p>
                 </div>
               ))}
             </div>
