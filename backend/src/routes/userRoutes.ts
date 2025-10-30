@@ -1,8 +1,12 @@
 // backend/src/routes/userRoutes.ts
 import { Router } from "express";
 import multer from "multer";
-import { createUser, /* si existe, exporta createUser */ } from "../controllers/userController";
-import { getMe } from "../controllers/userController";
+import { 
+  createUser, 
+  getMe, 
+  updateProfile, 
+  changePassword 
+} from "../controllers/userController";
 import { authMiddleware } from "../middleware/authMiddleware";
 
 const router = Router();
@@ -30,7 +34,15 @@ router.post("/register-root", upload.single("foto"), (req, res, next) => {
   createUser(req, res);
 });
 
-// obtener usuario actual (protegido)
+// ==================== RUTAS PROTEGIDAS ====================
+
+// Obtener usuario actual
 router.get("/me", authMiddleware, getMe);
+
+// Actualizar perfil (nombres, apellidos, email, etc.)
+router.put("/me", authMiddleware, updateProfile);
+
+// Cambiar contraseña
+router.put("/me/password", authMiddleware, changePassword);
 
 export default router;
