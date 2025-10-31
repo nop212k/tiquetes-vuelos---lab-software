@@ -5,6 +5,7 @@ import { AppDataSource } from "../config/data-source";
 import { User } from "../models/User";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { sendPasswordResetEmail } from "../services/emailService";
 
 export const loginUser = async (req: Request, res: Response) => {
   const { login, password } = req.body;
@@ -20,8 +21,6 @@ export const loginUser = async (req: Request, res: Response) => {
     if (!user) {
       user = await userRepository.findOneBy({ usuario: login });
     }
-
-
 
     if (!user) return res.status(401).json({ message: "Usuario o contraseña incorrectos" });
 
@@ -59,18 +58,55 @@ export const forgotPassword = async (req: Request, res: Response) => {
       ]
     });
 
-    if (!user) return res.status(200).json({ message: "Si existe la cuenta, se ha enviado un email (no revelamos existencia)" });
+    // Siempre responder lo mismo para no revelar si el usuario existe
+    const successMessage = "Si existe una cuenta asociada, recibirás un email con instrucciones.";
+
+    if (!user) {
+      console.log(`⚠️ Intento de recuperación para usuario inexistente: ${login}`);
+      return res.status(200).json({ message: successMessage });
+    }
 
     const secret = process.env.JWT_SECRET;
     if (!secret) return res.status(500).json({ message: "Server misconfigured" });
 
-    const token = jwt.sign({ action: "reset" }, secret, { subject: String(user.id), expiresIn: "1h" });
+    // Generar token de recuperación
+    const token = jwt.sign(
+      { action: "reset", email: user.correo }, 
+      secret, 
+      { subject: String(user.id), expiresIn: "1h" }
+    );
+
     const resetUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/reset-password?token=${token}`;
 
-    return res.json({ message: "Si existe la cuenta, se ha enviado un email", resetUrl, token });
+    // Intentar enviar email
+    const emailSent = await sendPasswordResetEmail(
+      user.correo, 
+      resetUrl, 
+      user.nombres
+    );
+
+    if (emailSent) {
+      console.log(`✅ Email de recuperación enviado a: ${user.correo}`);
+    } else {
+      console.error(`❌ No se pudo enviar email a: ${user.correo}`);
+      
+      // En desarrollo, devolver el resetUrl para poder probar
+      if (process.env.NODE_ENV === "development") {
+        console.log(`🔗 URL de recuperación (dev): ${resetUrl}`);
+        return res.json({ 
+          message: successMessage, 
+          resetUrl, // Solo en desarrollo
+          token,    // Solo en desarrollo
+          dev: true 
+        });
+      }
+    }
+
+    return res.json({ message: successMessage });
+
   } catch (err) {
     console.error("forgotPassword error:", err);
-    return res.status(500).json({ message: "Error interno" });
+    return res.status(500).json({ message: "Error interno del servidor" });
   }
 };
 

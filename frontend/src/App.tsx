@@ -12,6 +12,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import ProtectedRoute from "./components/ProtectedRoute";
 import CrearVuelosForm from "./components/admin/CrearVuelosForm";
+import EditarVueloForm from "./components/admin/EditarVueloForm"; // 👈 Importar el componente
 import SearchForm from "./components/SearchForm";
 import PerfilAdmin from "./pages/PerfilAdmin";
 import PerfilCliente from "./pages/PerfilCliente";
@@ -46,6 +47,16 @@ function App() {
         <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><Admin /></ProtectedRoute>}/>
         <Route path="/perfil-admin" element={<ProtectedRoute requiredRole="admin"><PerfilAdmin /></ProtectedRoute>}/>
         <Route path="/crear-vuelos" element={<ProtectedRoute requiredRole="admin"><CrearVuelosForm /></ProtectedRoute>}/>
+        
+        {/* 👇 AGREGAR ESTA RUTA PARA EDITAR VUELOS */}
+        <Route 
+          path="/editar-vuelo/:id" 
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <EditarVueloForm />
+            </ProtectedRoute>
+          }
+        />
         
         {/* Rutas públicas */}
         <Route path="/forgot-password" element={<ForgotPassword />} />
