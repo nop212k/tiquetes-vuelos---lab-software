@@ -263,12 +263,40 @@ export default function RegisterForm({ isRoot = false }: RegisterFormProps) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <DatePicker
   selected={selectedDate}
-  onChange={(date) => setSelectedDate(date)}
+  onChange={(date) => {
+    if (!date) return;
+
+    const hoy = new Date();
+    const edad =
+      hoy.getFullYear() -
+      date.getFullYear() -
+      (hoy < new Date(hoy.getFullYear(), date.getMonth(), date.getDate()) ? 1 : 0);
+
+    if (edad < 18) {
+      toast.error("Debes tener al menos 18 años.");
+      return;
+    }
+    if (edad > 100) {
+      toast.error("La edad no puede superar los 100 años.");
+      return;
+    }
+
+    setSelectedDate(date);
+    // ✅ Guardamos el valor formateado en el formulario
+    setValue("fechaNacimiento", date.toISOString().split("T")[0], { shouldValidate: true });
+  }}
   dateFormat="dd/MM/yyyy"
   placeholderText="Fecha de nacimiento"
+  required
+  maxDate={maxDate}   // 🔒 Máximo: hace 18 años
+  minDate={minDate}   // 🔒 Mínimo: hace 100 años
+  showMonthDropdown
+  showYearDropdown
+  dropdownMode="select"
   className={`${authInputCls} !text-black !placeholder-gray-500 !bg-white !border !border-gray-300`}
-  calendarClassName="bg-white text-black"
+  calendarClassName="bg-white text-black rounded-md shadow-md"
 />
+
 
             <div
               className="relative"
