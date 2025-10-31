@@ -1,0 +1,61 @@
+/* === Forzamos estilo claro solo para el input del DatePicker === */
+.react-datepicker__input-container input,
+input.datepicker-input {
+  background-color: #ffffff !important;  /* fondo blanco puro */
+  color: #000000 !important;             /* texto negro */
+  border: 1px solid #d1d5db !important;  /* gris claro (igual que gray-300) */
+  border-radius: 6px !important;
+  padding: 8px 12px !important;
+  font-size: 1rem !important;
+  width: 100%;
+  caret-color: black !important;         /* color del cursor */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); /* sutil sombra como los otros inputs */
+  transition: all 0.2s ease-in-out;
+}
+
+/* Placeholder visible */
+.react-datepicker__input-container input::placeholder,
+input.datepicker-input::placeholder {
+  color: #6b7280 !important; /* gris medio (gray-500) */
+}
+
+/* Estado de foco (cuando haces clic) */
+.react-datepicker__input-container input:focus,
+input.datepicker-input:focus {
+  border-color: #3b82f6 !important; /* azul de foco */
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25) !important;
+  outline: none !important;
+}
+
+/* === Estilo del calendario === */
+.react-datepicker {
+  background-color: #2e2e2e !important;
+  border: 1px solid #555 !important;
+  color: white !important;
+  border-radius: 8px;
+}
+
+/* Encabezado (mes y año) */
+.react-datepicker__header {
+  background-color: #3a3a3a !important;
+  color: white !important;
+  border-bottom: 1px solid #555 !important;
+}
+
+/* Días y nombres de días */
+.react-datepicker__day,
+.react-datepicker__day-name {
+  color: white !important;
+}
+
+/* Día seleccionado */
+.react-datepicker__day--selected {
+  background-color: #007bff !important;
+  color: white !important;
+}
+
+/* Hover en días */
+.react-datepicker__day:hover {
+  background-color: #005f8a !important;
+  color: white !important;
+}

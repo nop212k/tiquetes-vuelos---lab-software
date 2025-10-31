@@ -5,7 +5,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-
+import "react-datepicker/dist/react-datepicker.css";
+import DatePicker from "react-datepicker";
+import "./RegisterForm.css";
 
 // ====================== SCHEMA DE VALIDACIÓN ======================
 const registerSchema = z
@@ -16,56 +18,46 @@ const registerSchema = z
     documento: z
       .string()
       .regex(/^\d{8,10}$/, "La cédula debe tener entre 8 y 10 dígitos"),
-
     nombres: z
       .string()
       .min(2, "Ingrese nombres válidos")
       .refine((v) => !/^\s*$/.test(v), "El campo nombres no puede contener solo espacios")
       .transform((v) => v.trim()),
-
     apellidos: z
       .string()
       .min(2, "Ingrese apellidos válidos")
       .refine((v) => !/^\s*$/.test(v), "El campo apellidos no puede contener solo espacios")
       .transform((v) => v.trim()),
-
     fechaNacimiento: z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/, "Formato fecha inválido"),
-
     lugarNacimiento: z
       .string()
       .min(2, "Seleccione lugar de nacimiento")
       .refine((v) => !/^\s*$/.test(v), "El campo lugar de nacimiento no puede contener solo espacios")
       .transform((v) => v.trim()),
-
     direccion: z
       .string()
       .min(5, "Dirección muy corta")
       .refine((v) => !/^\s*$/.test(v), "La dirección no puede contener solo espacios")
       .transform((v) => v.trim()),
-
     genero: z.enum(["M", "F", "O"], { required_error: "Seleccione género" }),
-
     correo: z
       .string()
       .email("Correo inválido")
       .refine((v) => !/^\s*$/.test(v), "El correo no puede contener solo espacios")
       .transform((v) => v.trim()),
-
     usuario: z
       .string()
       .min(3, "Usuario mínimo 3 caracteres")
       .refine((v) => !/^\s*$/.test(v), "El usuario no puede contener solo espacios")
       .transform((v) => v.trim()),
-
     contrasena: z
       .string()
       .min(10, "Mínimo 10 caracteres")
       .refine((v) => /[A-Z]/.test(v), "Debe incluir mayúscula")
       .refine((v) => /[0-9]/.test(v), "Debe incluir número")
       .refine((v) => !/[^a-zA-Z0-9]/.test(v), "No se permiten símbolos"),
-
     repetirContrasena: z.string(),
   })
   .refine((data) => data.contrasena === data.repetirContrasena, {
@@ -89,13 +81,13 @@ const minDate = new Date(today.getFullYear() - 100, today.getMonth(), today.getD
 const formatDate = (d: Date) => d.toISOString().split("T")[0];
 
 //=======================INTERFAZ===========================
-
 interface RegisterFormProps {
   isRoot?: boolean;
 }
 
 // ====================== COMPONENTE ======================
 export default function RegisterForm({ isRoot = false }: RegisterFormProps) {
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const {
     register,
     handleSubmit,
@@ -113,14 +105,15 @@ export default function RegisterForm({ isRoot = false }: RegisterFormProps) {
   const contrasena = watch("contrasena") || "";
   const navigate = useNavigate();
 
-
   // ====================== CIUDADES ======================
   const [ciudades, setCiudades] = useState<Ciudad[]>([]);
   const [loadingCiudades, setLoadingCiudades] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedCiudad, setSelectedCiudad] = useState<Ciudad | null>(null);
+  const [isSelecting, setIsSelecting] = useState(false);
 
   useEffect(() => {
+    if (isSelecting) return; // 🚫 evita buscar justo después de seleccionar
     if (!query) return setCiudades([]);
     const timer = setTimeout(async () => {
       try {
@@ -135,13 +128,15 @@ export default function RegisterForm({ isRoot = false }: RegisterFormProps) {
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, isSelecting]);
 
   function handleSelectCiudad(c: Ciudad) {
+    setIsSelecting(true);
     setValue("lugarNacimiento", c.nombre);
     setQuery(c.nombre);
     setSelectedCiudad(c);
     setCiudades([]);
+    setTimeout(() => setIsSelecting(false), 300); // ✅ reactiva búsqueda luego
   }
 
   // ====================== CONTRASEÑA ======================
@@ -195,7 +190,7 @@ export default function RegisterForm({ isRoot = false }: RegisterFormProps) {
       }
       if (isRoot) {
         toast.success("Administrador registrado correctamente 🎉");
-        setTimeout(() => navigate("/root"), 2000); // pequeño delay para que el toast aparezca
+        setTimeout(() => navigate("/root"), 2000);
       } else {
         toast.success("Registro exitoso 🎉");
         setTimeout(() => navigate("/login"), 2000);
@@ -208,6 +203,7 @@ export default function RegisterForm({ isRoot = false }: RegisterFormProps) {
   const authInputCls =
     "border p-2 rounded bg-white text-black placeholder-gray-400 auth-input [appearance:auto] [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:block [&::-webkit-calendar-picker-indicator]:cursor-pointer";
 
+  
   // ====================== UI ======================
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4">
@@ -265,20 +261,53 @@ export default function RegisterForm({ isRoot = false }: RegisterFormProps) {
 
             {/* Fecha y Lugar nacimiento */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <input type="date" {...register("fechaNacimiento")} className={authInputCls} min={formatDate(minDate)} max={formatDate(maxDate)} />
-              <div className="relative">
-                <input type="text" {...register("lugarNacimiento")} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Lugar de nacimiento" className={authInputCls} />
-                {loadingCiudades && <div className="absolute right-2 top-2">Cargando...</div>}
-                {ciudades.length > 0 && (
-                  <ul className="absolute z-50 w-full bg-white border mt-1 max-h-48 overflow-auto">
-                    {ciudades.map((c) => (
-                      <li key={c.id} className="p-2 hover:bg-gray-200 cursor-pointer text-black" onClick={() => handleSelectCiudad(c)}>
-                        {c.nombre} - {c.region}, {c.pais}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
+                <DatePicker
+  selected={selectedDate}
+  onChange={(date) => setSelectedDate(date)}
+  dateFormat="dd/MM/yyyy"
+  placeholderText="Fecha de nacimiento"
+  className={`${authInputCls} !text-black !placeholder-gray-500 !bg-white !border !border-gray-300`}
+  calendarClassName="bg-white text-black"
+/>
+
+            <div
+              className="relative"
+              onBlur={() => setTimeout(() => setCiudades([]), 150)} // Espera a que se ejecute el onMouseDown
+            >
+              <input
+                type="text"
+                {...register("lugarNacimiento")}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Lugar de nacimiento"
+                className={authInputCls}
+                onFocus={() => query && setCiudades(ciudades)}
+                autoComplete="off"
+              />
+
+              {loadingCiudades && <div className="absolute right-2 top-2">Cargando...</div>}
+
+              {ciudades.length > 0 && (
+                <ul
+                  className="absolute z-50 w-full bg-white border mt-1 max-h-48 overflow-auto"
+                  tabIndex={-1}
+                >
+                  {ciudades.map((c) => (
+                    <li
+                      key={c.id}
+                      className="p-2 hover:bg-gray-200 cursor-pointer text-black"
+                      onMouseDown={() => {
+                        handleSelectCiudad(c);
+                        setCiudades([]); // Cierra la lista al seleccionar
+                      }}
+                    >
+                      {c.nombre} - {c.region}, {c.pais}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
             </div>
             {errors.fechaNacimiento && <p className="text-red-600 text-sm">{errors.fechaNacimiento.message}</p>}
             {errors.lugarNacimiento && <p className="text-red-600 text-sm">{errors.lugarNacimiento.message}</p>}
@@ -345,6 +374,7 @@ export default function RegisterForm({ isRoot = false }: RegisterFormProps) {
           </form>
         </div>
       </div>
+      
     </div>
   );
 }

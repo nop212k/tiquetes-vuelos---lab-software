@@ -68,12 +68,7 @@ const Home: React.FC = () => {
     <div className="page">
       <Navbar />
       <main className="hero">
-        <img
-          src="/images/fondoHome.png"
-          alt="Avión sobre el atardecer"
-          className="hero__bg"
-          loading="lazy"
-        />
+        
         <div className="hero__overlay" aria-hidden="true" />
 
         {/* CONTENIDO SOBRE LA IMAGEN */}

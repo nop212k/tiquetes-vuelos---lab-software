@@ -112,6 +112,9 @@ export default function FlightSearch() {
   const destinationOptions =
     flightType === "nacional" ? nationalCities : internationalDestinations;
 
+  console.log("Resultados de vuelos (para depurar):", results);
+
+
   return (
     <div className="w-full">
       {/* --- FORMULARIO --- */}
@@ -146,7 +149,6 @@ export default function FlightSearch() {
               value={origin}
               onChange={(e) => setOrigin(e.target.value)}
               className="w-full border border-gray-300 rounded-lg p-2"
-              required
             >
               <option value="">Seleccione origen</option>
               {originOptions.map((city) => (
@@ -210,18 +212,19 @@ export default function FlightSearch() {
             <h2 className="text-xl font-semibold mb-4 text-center">
               Resultados de vuelos
             </h2>
-            <div className="grid gap-4">
+            <div className="grid gap-6 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200 rounded-lg">
               {results.map((flight, index) => (
                 <div
                   key={index}
-                  className="bg-white shadow rounded-lg p-4 flex justify-between items-center"
+                  className="bg-white shadow-lg rounded-xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center border border-gray-100 hover:shadow-2xl transition-shadow duration-300"
                 >
-                  <div>
-                    <p className="font-semibold">
-                      {flight.origen} → {flight.destino}
+                  {/* --- Información del vuelo --- */}
+                  <div className="text-gray-700 font-medium space-y-2">
+                    <p className="text-xl font-semibold text-gray-800">
+                      ✈️ {flight.origen} → {flight.destino}
                     </p>
-                    <p className="text-gray-600">
-                      Salida:{" "}
+                    <p>
+                      🕓 <span className="font-semibold">Salida:</span>{" "}
                       {new Date(flight.hora).toLocaleString("es-CO", {
                         year: "numeric",
                         month: "long",
@@ -229,14 +232,36 @@ export default function FlightSearch() {
                         hour: "2-digit",
                         minute: "2-digit",
                         hour12: true,
-                        timeZone: "America/Bogota", // ajusta si tu backend usa UTC
+                        timeZone: "America/Bogota",
                       })}
-                      {" "} — Código de vuelo: {flight.codigoVuelo}
                     </p>
-
+                    <p>
+                      🧾 <span className="font-semibold">Código:</span> {flight.codigoVuelo}
+                    </p>
                   </div>
-                  <p className="text-blue-600 font-semibold">${Number(flight.costoBase).toLocaleString("es-CO", {
-                      minimumFractionDigits: 2,})}</p>
+
+                  {/* --- Precio y botones --- */}
+                  <div className="flex flex-col items-end mt-4 md:mt-0 space-y-3">
+                    <p className="text-blue-600 text-2xl font-bold">
+                      ${Number(flight.costoBase).toLocaleString("es-CO", {
+                        minimumFractionDigits: 2,
+                      })}
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => alert(`Reserva creada para el vuelo ${flight.codigoVuelo}`)}
+                        className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition"
+                      >
+                        Reservar
+                      </button>
+                      <button
+                        onClick={() => alert(`Compra realizada para el vuelo ${flight.codigoVuelo}`)}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                      >
+                        Comprar
+                      </button>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
