@@ -14,11 +14,18 @@ const ciudadesDestino = [
 ] as const;
 
 const distancias: Record<string, number> = {
+  // Distancias internacionales (km)
   Madrid: 8000,
   Londres: 8500,
   "New York": 4000,
   "Buenos Aires": 4600,
   Miami: 2400,
+  // Distancias nacionales aproximadas desde Bogotá (km)
+  Pereira: 300,
+  Medellín: 350,
+  Cali: 450,
+  Cartagena: 650,
+  Bogotá: 0,
 };
 
 const zonasHorarias: Record<string, string> = {
@@ -35,10 +42,28 @@ function calcularLlegadaYDuracion(origen: string, destino: string, horaSalidaISO
   const salidaLocal = moment.tz(horaSalidaISO, "YYYY-MM-DDTHH:mm", "America/Bogota");
   if (!salidaLocal.isValid()) return null;
 
-  const distancia = distancias[destino] ?? 300;
+  // Calcular distancia entre ciudades
+  let distancia = 300; // distancia por defecto
+  
+  if (origen === destino) {
+    // Mismo origen y destino no tiene sentido
+    return null;
+  }
+  
+  if (destinosInternacionales.has(destino)) {
+    // Vuelo internacional
+    distancia = distancias[destino] ?? 4000;
+  } else {
+    // Vuelo nacional - calcular distancia entre ciudades colombianas
+    const distanciaOrigen = distancias[origen] ?? 300;
+    const distanciaDestino = distancias[destino] ?? 300;
+    distancia = Math.abs(distanciaDestino - distanciaOrigen) + 100; // distancia mínima de 100km
+    distancia = Math.max(distancia, 100); // mínimo 100km
+  }
+
   let duracionHoras = distancia / 900;
-  if (origen !== "Bogotá") duracionHoras += 0.2;
-  const duracionMinutos = Math.max(1, Math.round(duracionHoras * 60));
+  if (origen !== "Bogotá" && !destinosInternacionales.has(destino)) duracionHoras += 0.2;
+  const duracionMinutos = Math.max(30, Math.round(duracionHoras * 60)); // mínimo 30 minutos
 
   const llegadaUTC = salidaLocal.clone().add(duracionMinutos, "minutes").utc();
   const zonaDestino = destinosInternacionales.has(destino) ? (zonasHorarias[destino] ?? "UTC") : "America/Bogota";
@@ -174,11 +199,9 @@ const CrearVuelosForm: React.FC<{ onVuelosCreados?: () => void }> = ({ onVuelosC
 
   // Recalcular llegada cuando cambian origen/destino/salida
   useEffect(() => {
-    if (!isEditMode || !origen || !destino || !horaSalida) {
-      if (!isEditMode) {
-        setHoraLlegada("");
-        setDuracionMin(null);
-      }
+    if (!origen || !destino || !horaSalida) {
+      setHoraLlegada("");
+      setDuracionMin(null);
       return;
     }
     const res = calcularLlegadaYDuracion(origen, destino, horaSalida);
@@ -186,7 +209,7 @@ const CrearVuelosForm: React.FC<{ onVuelosCreados?: () => void }> = ({ onVuelosC
       setHoraLlegada(res.llegadaLocalForInput);
       setDuracionMin(res.duracionMinutos);
     }
-  }, [origen, destino, horaSalida, isEditMode]);
+  }, [origen, destino, horaSalida]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
