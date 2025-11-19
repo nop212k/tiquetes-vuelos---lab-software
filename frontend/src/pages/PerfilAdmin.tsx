@@ -26,7 +26,7 @@ const PerfilAdmin: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [userData, setUserData] = useState<UserData | null>(null);
-  
+
   // Estados para edición de perfil
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState({
@@ -51,6 +51,7 @@ const PerfilAdmin: React.FC = () => {
 
   useEffect(() => {
     fetchUserData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchUserData = async () => {
@@ -102,16 +103,39 @@ const PerfilAdmin: React.FC = () => {
     }
   };
 
+  // =========================
+  // VALIDACIONES DE CONTRASEÑA
+  // =========================
+  function validatePassword(pwd: string) {
+    if (!pwd || pwd.length === 0) return null; // no mostrar error mientras está vacío (se muestra cuando user intenta enviar)
+    if (pwd.length < 10) return "La contraseña debe tener mínimo 10 caracteres";
+    if (!/[A-Z]/.test(pwd)) return "Debe incluir una letra mayúscula";
+    if (!/[0-9]/.test(pwd)) return "Debe incluir al menos un número";
+    if (/[^a-zA-Z0-9]/.test(pwd)) return "No se permiten símbolos o caracteres especiales";
+    return null;
+  }
+
+  const getPasswordStrength = (pwd: string) => {
+    let score = 0;
+    if (pwd.length >= 10) score++;
+    if (/[A-Z]/.test(pwd)) score++;
+    if (/[0-9]/.test(pwd)) score++;
+    if (/^[a-zA-Z0-9]+$/.test(pwd) && pwd.length >= 10) score++; // penaliza símbolos y longitud
+    return score; // 0..4
+  };
+
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error("Las contraseñas nuevas no coinciden");
+    // Validación igual a RegisterForm
+    const error = validatePassword(passwordData.newPassword);
+    if (error) {
+      toast.error(error);
       return;
     }
 
-    if (passwordData.newPassword.length < 8) {
-      toast.error("La nueva contraseña debe tener al menos 8 caracteres");
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error("Las contraseñas nuevas no coinciden");
       return;
     }
 
@@ -119,6 +143,7 @@ const PerfilAdmin: React.FC = () => {
 
     try {
       const token = localStorage.getItem("token");
+
       await axios.put(
         `${API_BASE}/api/users/me/password`,
         {
@@ -132,6 +157,7 @@ const PerfilAdmin: React.FC = () => {
 
       toast.success("Contraseña actualizada correctamente");
       setShowPasswordModal(false);
+
       setPasswordData({
         currentPassword: "",
         newPassword: "",
@@ -177,7 +203,7 @@ const PerfilAdmin: React.FC = () => {
           <div className="flex items-center gap-6">
             <div className="bg-white/20 p-4 rounded-full">
               <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center text-4xl font-bold text-[#003b5eff]">
-                {userData.nombres.charAt(0)}{userData.apellidos.charAt(0)}
+                {(userData.nombres?.charAt(0) ?? "") + (userData.apellidos?.charAt(0) ?? "")}
               </div>
             </div>
             <div>
@@ -379,9 +405,13 @@ const PerfilAdmin: React.FC = () => {
                     type={showPasswords.new ? "text" : "password"}
                     value={passwordData.newPassword}
                     onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                    className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-[#003b5eff] outline-none pr-12"
+                    className={`w-full px-4 py-2 border-2 rounded-lg outline-none pr-12 ${
+                      validatePassword(passwordData.newPassword)
+                        ? "border-red-400 focus:border-red-500"
+                        : "border-gray-200 focus:border-[#003b5eff]"
+                    }`}
                     required
-                    minLength={8}
+                    minLength={10}
                   />
                   <button
                     type="button"
@@ -391,7 +421,46 @@ const PerfilAdmin: React.FC = () => {
                     {showPasswords.new ? "👁️" : "👁️‍🗨️"}
                   </button>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">Mínimo 8 caracteres</p>
+
+                {/* Barra de fuerza */}
+                <div className="mt-3">
+                  <div className="h-2 bg-gray-200 rounded-full">
+                    <div
+                      className={`h-2 rounded-full transition-all duration-300 ${
+                        getPasswordStrength(passwordData.newPassword) <= 1
+                          ? "bg-red-500 w-1/4"
+                          : getPasswordStrength(passwordData.newPassword) === 2
+                          ? "bg-yellow-500 w-2/4"
+                          : getPasswordStrength(passwordData.newPassword) === 3
+                          ? "bg-blue-500 w-3/4"
+                          : "bg-green-500 w-full"
+                      }`}
+                    ></div>
+                  </div>
+                </div>
+
+                {/* Reglas dinámicas */}
+                <ul className="mt-3 text-sm space-y-1">
+                  <li className={passwordData.newPassword.length >= 10 ? "text-green-600" : "text-gray-600"}>
+                    {passwordData.newPassword.length >= 10 ? "✔" : "•"} Mínimo 10 caracteres
+                  </li>
+                  <li className={/[A-Z]/.test(passwordData.newPassword) ? "text-green-600" : "text-gray-600"}>
+                    {/[A-Z]/.test(passwordData.newPassword) ? "✔" : "•"} Al menos una letra mayúscula
+                  </li>
+                  <li className={/[0-9]/.test(passwordData.newPassword) ? "text-green-600" : "text-gray-600"}>
+                    {/[0-9]/.test(passwordData.newPassword) ? "✔" : "•"} Al menos un número
+                  </li>
+                  <li className={/^[a-zA-Z0-9]+$/.test(passwordData.newPassword) ? "text-green-600" : "text-gray-600"}>
+                    {/^[a-zA-Z0-9]+$/.test(passwordData.newPassword) ? "✔" : "•"} Sin caracteres especiales (solo letras y números)
+                  </li>
+                </ul>
+
+                {/* Mensaje de error en vivo */}
+                {validatePassword(passwordData.newPassword) && (
+                  <p className="text-red-500 text-sm mt-2">
+                    {validatePassword(passwordData.newPassword)}
+                  </p>
+                )}
               </div>
 
               {/* Confirmar contraseña */}
@@ -402,7 +471,11 @@ const PerfilAdmin: React.FC = () => {
                     type={showPasswords.confirm ? "text" : "password"}
                     value={passwordData.confirmPassword}
                     onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                    className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-[#003b5eff] outline-none pr-12"
+                    className={`w-full px-4 py-2 border-2 rounded-lg outline-none pr-12 ${
+                      passwordData.confirmPassword && passwordData.confirmPassword !== passwordData.newPassword
+                        ? "border-red-400 focus:border-red-500"
+                        : "border-gray-200 focus:border-[#003b5eff]"
+                    }`}
                     required
                   />
                   <button
@@ -413,6 +486,10 @@ const PerfilAdmin: React.FC = () => {
                     {showPasswords.confirm ? "👁️" : "👁️‍🗨️"}
                   </button>
                 </div>
+
+                {passwordData.confirmPassword && passwordData.confirmPassword !== passwordData.newPassword && (
+                  <p className="text-red-500 text-sm mt-2">Las contraseñas no coinciden</p>
+                )}
               </div>
 
               <div className="flex gap-3 pt-4">
