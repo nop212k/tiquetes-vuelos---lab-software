@@ -7,7 +7,7 @@ import { User } from "../models/User";
 const userRepo = () => AppDataSource.getRepository(User);
 
 export interface AuthRequest extends Request {
-  user?: User | null;
+  user?: User;
   tokenPayload?: any;
 }
 

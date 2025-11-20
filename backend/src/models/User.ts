@@ -1,5 +1,9 @@
 // src/models/User.ts
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from "typeorm";
+import { OneToMany } from "typeorm";
+import { Chat } from "./Chat";
+import { Mensaje } from "./Mensaje";
+
 
 @Entity("usuarios")
 export class User {
@@ -53,4 +57,12 @@ export class User {
 
   @UpdateDateColumn({ name: "actualizado_en" })
   actualizadoEn!: Date;
+
+  @OneToMany(() => Chat, (chat) => chat.cliente)
+  chats!: Chat[];
+
+  @OneToMany(() => Mensaje, (mensaje) => mensaje.sender)
+  mensajes!: Mensaje[];
+
+
 }
