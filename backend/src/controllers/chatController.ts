@@ -42,34 +42,39 @@ export const createClientChat = async (req: Request, res: Response) => {
 /* ==========================================================
    CLIENTE OBTIENE SU CHAT (o lo crea si no existe)
 ========================================================== */
+// Backend: getClientChat.ts
 export const getClientChat = async (req: Request, res: Response) => {
   try {
     const userId = req.user!.id;
 
-    // Buscamos si el chat ya existe
-    let chat = await chatRepo.findOne({
+    // 1️⃣ Obtener solo el chat sin relaciones profundas
+    const chat = await chatRepo.findOne({
       where: { cliente: { id: userId } },
-      relations: ["mensajes", "mensajes.usuario", "mensajes.administrador"],
-      order: { mensajes: { fecha: "ASC" } },
+      select: ["id", "creado_en"], // evita traer cliente -> chats -> cliente...
     });
 
-    // Si no existe, lo creamos automáticamente
-    if (!chat) {
-      const user = await userRepo.findOneBy({ id: userId });
-      if (!user) return res.status(404).json({ message: "Usuario no encontrado." });
+    if (!chat) return res.status(404).json({ message: "No tienes un chat creado." });
 
-      chat = chatRepo.create({ cliente: user });
-      await chatRepo.save(chat);
+    // 2️⃣ Obtener mensajes por separado
+    const mensajes = await mensajeRepo.find({
+      where: { chat: { id: chat.id } },
+      relations: ["usuario", "administrador"], // solo estas relaciones
+      order: { fecha: "ASC" },
+    });
 
-      // Inicialmente no tendrá mensajes
-      chat.mensajes = [];
-    }
+    // Asignar mensajes al chat
+    (chat as any).mensajes = mensajes;
 
     return res.json(chat);
   } catch (error) {
+    console.error("Error en getClientChat:", error);
     return res.status(500).json({ message: "Error obteniendo chat", error });
   }
 };
+
+
+
+
 
 
 /* ==========================================================
@@ -170,22 +175,15 @@ export const getAllChats = async (req: Request, res: Response) => {
       .leftJoinAndSelect("mensaje.usuario", "usuario")
       .leftJoinAndSelect("mensaje.administrador", "administrador")
       .orderBy("chat.creado_en", "DESC")
-      .addOrderBy("mensaje.fecha", "ASC")  // mensajes en orden ascendente
+      .addOrderBy("mensaje.fecha", "ASC")
       .getMany();
 
-    // opcional: solo el último mensaje por chat
-    const chatsWithLastMessage = chats.map(chat => {
-      const lastMessage = chat.mensajes.length
-        ? chat.mensajes[chat.mensajes.length - 1]
-        : null;
-      return { ...chat, lastMessage };
-    });
-
-    return res.json(chatsWithLastMessage);
+    return res.json(chats); // Devuelve todos los mensajes
   } catch (error) {
     return res.status(500).json({ message: "Error obteniendo chats", error });
   }
 };
+
 
 
 
@@ -211,18 +209,29 @@ export const getMessagesByChatId = async (req: Request, res: Response) => {
 };
 
 /* ==========================================================
-   ADMIN — OBTIENE UN CHAT POR ID
+   ADMIN — OBTIENE UN CHAT POR ID CON MENSAJES
 ========================================================== */
 export const getChatById = async (req: Request, res: Response) => {
   try {
     const { chatId } = req.params;
 
+    // 1️⃣ Obtener el chat con el cliente
     const chat = await chatRepo.findOne({
       where: { id: Number(chatId) },
       relations: ["cliente"],
     });
 
     if (!chat) return res.status(404).json({ message: "Chat no encontrado." });
+
+    // 2️⃣ Obtener los mensajes del chat con usuario o administrador
+    const mensajes = await mensajeRepo.find({
+      where: { chat: { id: chat.id } },
+      relations: ["usuario", "administrador"],
+      order: { fecha: "ASC" },
+    });
+
+    // 3️⃣ Asignar mensajes al chat
+    (chat as any).mensajes = mensajes;
 
     return res.json(chat);
   } catch (error) {

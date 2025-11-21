@@ -21,6 +21,7 @@ import Historial from "./pages/Historial";
 import { useEffect } from "react";
 import ForoCliente from "./components/cliente/ForoCliente";
 import ForoAdminLista from "./components/admin/ForoAdminLista";
+import ForoAdminChat from "./components/admin/ForoAdminChat";
 
 function App() {
   useEffect(() => {
@@ -51,6 +52,7 @@ function App() {
         <Route path="/perfil-admin" element={<ProtectedRoute requiredRole="admin"><PerfilAdmin /></ProtectedRoute>}/>
         <Route path="/crear-vuelos" element={<ProtectedRoute requiredRole="admin"><CrearVuelosForm /></ProtectedRoute>}/>
         <Route path="/foroAdmin" element={<ProtectedRoute requiredRole="admin"><ForoAdminLista /></ProtectedRoute>}/>
+        <Route path="/admin/chat/:chatId" element={<ProtectedRoute requiredRole="admin"><ForoAdminChat /></ProtectedRoute>} />
         <Route path="/editar-vuelo/:id" element={<ProtectedRoute requiredRole="admin"><EditarVueloForm /></ProtectedRoute>}/>
         
         {/* Rutas públicas */}

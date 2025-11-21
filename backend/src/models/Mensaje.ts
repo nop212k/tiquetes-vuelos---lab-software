@@ -2,6 +2,7 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   ManyToOne,
+  OneToMany,
   Column,
   CreateDateColumn,
   JoinColumn,
@@ -16,17 +17,17 @@ export class Mensaje {
   id!: number;
 
   // 🔗 usuario_id → User
-  @ManyToOne(() => User, (user) => user.mensajes)
+  @ManyToOne(() => User, (user) => user.mensajes, { nullable: true })
   @JoinColumn({ name: "usuario_id" })
   usuario!: User;
 
   // 🔗 administrador_id → User
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: "administrador_id" })
   administrador!: User;
 
   // 🔗 chat_id → Chat
-  @ManyToOne(() => Chat, (chat) => chat.mensajes)
+  @ManyToOne(() => Chat, (chat) => chat.mensajes, { onDelete: "CASCADE" })
   @JoinColumn({ name: "chat_id" })
   chat!: Chat;
 

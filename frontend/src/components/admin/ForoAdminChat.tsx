@@ -1,18 +1,22 @@
+// src/components/admin/ForoAdminChat.tsx
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
+interface User {
+  id: number;
+  nombres: string;
+  tipo: string;
+}
+
 interface Mensaje {
   id: number;
-  message: string;
-  created_at: string;
-  sender: {
-    id: number;
-    nombres: string;
-    tipo: string;
-  };
+  mensaje: string;
+  fecha: string;
+  usuario?: User;
+  administrador?: User;
 }
 
 interface Chat {
@@ -28,103 +32,151 @@ const ForoAdminChat: React.FC = () => {
   const { chatId } = useParams();
   const [chat, setChat] = useState<Chat | null>(null);
   const [newMessage, setNewMessage] = useState("");
-  const token = localStorage.getItem("token");
+  const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const token = localStorage.getItem("token");
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   useEffect(() => {
     const fetchChat = async () => {
       try {
-        const res = await axios.get(`${API_BASE}/api/admin/chat/${chatId}`, {
+        const res = await axios.get(`${API_BASE}/api/chats/${chatId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setChat(res.data);
       } catch (err) {
         console.error("Error cargando chat:", err);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchChat();
-  }, [chatId]);
+  }, [chatId, token]);
 
-  const handleSend = async () => {
-    if (!newMessage.trim()) return;
+  useEffect(() => {
+    scrollToBottom();
+  }, [chat]);
+
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !chat) return;
 
     try {
       const res = await axios.post(
-        `${API_BASE}/api/admin/chat/${chatId}/messages`,
+        `${API_BASE}/api/chats/${chatId}/messages`,
         { message: newMessage },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      setChat(prev =>
-        prev
-          ? { ...prev, mensajes: [...prev.mensajes, res.data] }
-          : prev
+      setChat((prev) =>
+        prev ? { ...prev, mensajes: [...prev.mensajes, res.data] } : prev
       );
-
       setNewMessage("");
     } catch (err) {
       console.error("Error enviando mensaje:", err);
     }
   };
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chat]);
-
-  if (!chat) return <div>Cargando...</div>;
+  if (loading)
+    return (
+      <div className="p-4 text-center text-lg text-gray-500">
+        Cargando chat...
+      </div>
+    );
 
   return (
-    <div className="flex flex-col h-screen p-4 bg-gray-100">
-      
-      <h1 className="text-2xl font-bold text-center mb-4">
-        Estás hablando con <span className="text-blue-600">{chat.cliente.nombres}</span>
-      </h1>
-
-      <div className="flex-1 overflow-y-auto bg-white p-4 rounded-lg shadow-md">
-        {chat.mensajes.map(msg => (
-          <div
-            key={msg.id}
-            className={`mb-3 flex ${
-              msg.sender.tipo === "admin" ? "justify-end" : "justify-start"
-            }`}
-          >
-            <div
-              className={`max-w-[70%] p-3 rounded-xl shadow ${
-                msg.sender.tipo === "admin"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200 text-black"
-              }`}
-            >
-              <div className="font-semibold">{msg.sender.nombres}</div>
-              <div>{msg.message}</div>
-              <div className="text-xs opacity-60 mt-1 text-right">
-                {new Date(msg.created_at).toLocaleString()}
-              </div>
-            </div>
-          </div>
-        ))}
-
-        <div ref={messagesEndRef} />
+    <div
+      className="flex flex-col h-screen p-4"
+      style={{
+        backgroundImage: 'url(/images/fonbusq1.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
+      {/* ENCABEZADO */}
+      <div className="flex justify-center mb-4">
+        <h1 className="text-3xl font-bold text-white drop-shadow-lg text-center">
+          Estás hablando con <span className="text-blue-600">{chat?.cliente.nombres}</span>
+        </h1>
       </div>
 
-      <div className="mt-3 flex">
-        <input
-          className="flex-1 rounded-full border px-4 py-2"
-          placeholder="Escribir mensaje..."
-          value={newMessage}
-          onChange={e => setNewMessage(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && handleSend()}
-        />
+      {/* CONTENEDOR DE MENSAJES */}
+      <div
+        className="flex-1 w-1/2 mx-auto overflow-y-auto p-4 rounded-xl shadow-inner bg-white/80 border border-gray-200 backdrop-blur-sm relative"
+      >
+        <div className="absolute inset-0 pointer-events-none opacity-10 flex justify-center items-center">
+          <img
+            src="/images/fondosin2.png"
+            alt="Logo transparente"
+            className="w-48 h-48 object-contain"
+          />
+        </div>
 
+        <div className="relative z-10">
+          {chat?.mensajes.length ? (
+            chat.mensajes.map((msg) => {
+              const isAdmin = !!msg.administrador;
+              const nombre = isAdmin ? msg.administrador!.nombres : msg.usuario?.nombres || "Cliente";
+
+              let fecha: string;
+              try {
+                fecha = msg.fecha ? new Date(msg.fecha).toLocaleString() : "Sin fecha";
+              } catch {
+                fecha = "Sin fecha";
+              }
+
+              return (
+                <div
+                  key={msg.id}
+                  className={`mb-3 flex ${isAdmin ? "justify-end" : "justify-start"}`}
+                >
+                  <div
+                    className={`max-w-[70%] p-3 rounded-xl shadow-sm ${
+                      isAdmin
+                        ? "bg-gradient-to-r from-[#0284c7] to-[#0369a1] text-white"
+                        : "bg-gradient-to-r from-[#10b981] to-[#22c55e] text-white"
+                    }`}
+                  >
+                    <div className="font-semibold">{nombre}</div>
+                    <div>{msg.mensaje}</div>
+                    <div className="text-xs text-gray-200 mt-1 text-right">{fecha}</div>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="text-gray-700 text-center mt-10">
+              No hay mensajes todavía.
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+      </div>
+
+      {/* INPUT MENSAJE */}
+      <div className="mt-4 flex space-x-2">
+        <input
+          type="text"
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleSendMessage();
+          }}
+          placeholder="Escribe tu mensaje..."
+          className="flex-1 border-2 border-gray-300 rounded-full p-3 focus:outline-none focus:border-[#005f7f]"
+        />
         <button
-          className="ml-2 px-6 py-2 bg-blue-600 text-white rounded-full"
-          onClick={handleSend}
+          onClick={handleSendMessage}
+          className="bg-gradient-to-r from-[#005f7f] to-[#003b5eff] text-white px-6 py-3 rounded-full font-semibold hover:from-[#0284c7] hover:to-[#0369a1] transition"
         >
           Enviar
         </button>
       </div>
-
     </div>
   );
 };

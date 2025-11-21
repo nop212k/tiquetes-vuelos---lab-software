@@ -38,14 +38,14 @@ const ForoCliente: React.FC = () => {
   useEffect(() => {
     const fetchChat = async () => {
       try {
-        const res = await axios.get(`${API_BASE}/api/chats`, {
+        const res = await axios.get(`${API_BASE}/api/chats/`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
         // Si no existe chat, crearlo vacío
         if (!res.data) {
           const nuevoChat = await axios.post(
-            `${API_BASE}/api/chats`,
+            `${API_BASE}/api/chats/`,
             {},
             { headers: { Authorization: `Bearer ${token}` } }
           );
@@ -73,7 +73,7 @@ const ForoCliente: React.FC = () => {
     try {
       const res = await axios.post(
         `${API_BASE}/api/chats/messages`,
-        { mensaje: newMessage },
+        { message: newMessage },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -112,7 +112,7 @@ const ForoCliente: React.FC = () => {
 
       {/* CONTENEDOR DE MENSAJES */}
       <div
-        className="flex-1 overflow-y-auto p-4 rounded-xl shadow-inner bg-white/80 border border-gray-200 backdrop-blur-sm relative"
+        className="flex-1 w-1/2 mx-auto overflow-y-auto p-4 rounded-xl shadow-inner bg-white/80 border border-gray-200 backdrop-blur-sm relative"
       >
         <div className="absolute inset-0 pointer-events-none opacity-10 flex justify-center items-center">
           <img

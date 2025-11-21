@@ -1,8 +1,11 @@
 // src/pages/ForoAdminLista.tsx
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
+
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
+
 
 interface Usuario {
   id: number;
@@ -24,6 +27,7 @@ interface Chat {
 }
 
 const ForoAdminLista: React.FC = () => {
+  const navigate = useNavigate();
   const [chats, setChats] = useState<Chat[]>([]);
   const token = localStorage.getItem("token");
 
@@ -91,7 +95,7 @@ const ForoAdminLista: React.FC = () => {
               return (
                 <div
                   key={chat.id}
-                  onClick={() => (window.location.href = `/admin/chat/${chat.id}`)}
+                  onClick={() => navigate(`/admin/chat/${chat.id}`)}
                   className="p-4 bg-white/90 backdrop-blur-sm border border-gray-300 shadow-md rounded-xl cursor-pointer
                   hover:bg-white hover:shadow-lg transition duration-200"
                 >
