@@ -10,6 +10,8 @@ import vuelosRoutes from './routes/vuelosRoutes';
 import { authMiddleware, isAdmin, isRoot } from './middleware/authMiddleware';
 import { errorHandler } from "./middleware/errorHandler";;
 import cityRoutes from "./routes/cityCountries";
+import chatRoutes from "./routes/chatRoutes";
+import mensajeRoutes from "./routes/mensajeRoutes";
 
 
 
@@ -26,10 +28,14 @@ app.use('/api', authRoutes);
 app.use('/api/cities', cityRoutes);
 app.use("/uploads", express.static("uploads"));
 app.use('/api/flights', vuelosRoutes);
+app.use('/api/chats', chatRoutes);
+app.use('/api/messages', mensajeRoutes);
 
 app.use('/api', rootRoutes);
 
 app.use('/api', authMiddleware, isRoot, rootRoutes);
+
+
 
 app.use(errorHandler);
 

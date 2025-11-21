@@ -18,6 +18,8 @@ import PerfilAdmin from "./pages/PerfilAdmin";
 import PerfilCliente from "./pages/PerfilCliente";
 import PerfilRoot from "./pages/PerfilRoot";
 import { useEffect } from "react";
+import ForoCliente from "./components/cliente/ForoCliente";
+import ForoAdminLista from "./components/admin/ForoAdminLista";
 
 function App() {
   // Verificar si hay un token en localStorage al iniciar la aplicación
@@ -38,6 +40,8 @@ function App() {
         {/* Rutas de Cliente */}
         <Route path="/cliente" element={<ProtectedRoute requiredRole="cliente"><Cliente /></ProtectedRoute>}/>
         <Route path="/perfil-cliente" element={<ProtectedRoute requiredRole="cliente"><PerfilCliente /></ProtectedRoute>}/>
+        <Route path="/foro" element={<ProtectedRoute requiredRole="cliente"><ForoCliente /></ProtectedRoute>}/>
+
         
         {/* Rutas de Root */}
         <Route path="/root" element={<ProtectedRoute requiredRole="root"><Root /></ProtectedRoute>}/>
@@ -47,6 +51,7 @@ function App() {
         <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><Admin /></ProtectedRoute>}/>
         <Route path="/perfil-admin" element={<ProtectedRoute requiredRole="admin"><PerfilAdmin /></ProtectedRoute>}/>
         <Route path="/crear-vuelos" element={<ProtectedRoute requiredRole="admin"><CrearVuelosForm /></ProtectedRoute>}/>
+        <Route path="/foroAdmin" element={<ProtectedRoute requiredRole="admin"><ForoAdminLista /></ProtectedRoute>}/>
         
         {/* 👇 AGREGAR ESTA RUTA PARA EDITAR VUELOS */}
         <Route 

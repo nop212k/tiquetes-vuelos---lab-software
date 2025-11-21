@@ -5,6 +5,7 @@ import {
   OneToMany,
   Column,
   CreateDateColumn,
+  JoinColumn
 } from "typeorm";
 
 import { User } from "./User";
@@ -16,6 +17,7 @@ export class Chat {
   id!: number;
 
   @ManyToOne(() => User, (user) => user.chats)
+  @JoinColumn({ name: "cliente_id" })
   cliente!: User;
 
   @OneToMany(() => Mensaje, (mensaje) => mensaje.chat)

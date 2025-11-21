@@ -61,7 +61,7 @@ export class User {
   @OneToMany(() => Chat, (chat) => chat.cliente)
   chats!: Chat[];
 
-  @OneToMany(() => Mensaje, (mensaje) => mensaje.sender)
+  @OneToMany(() => Mensaje, (mensaje) => mensaje.administrador)
   mensajes!: Mensaje[];
 
 

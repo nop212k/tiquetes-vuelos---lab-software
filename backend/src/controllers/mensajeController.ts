@@ -1,4 +1,3 @@
-// backend/src/controllers/mensajeController.ts
 import { Request, Response } from "express";
 import { AppDataSource } from "../config/data-source";
 import { Mensaje } from "../models/Mensaje";
@@ -9,11 +8,9 @@ const mensajeRepo = AppDataSource.getRepository(Mensaje);
 const chatRepo = AppDataSource.getRepository(Chat);
 const userRepo = AppDataSource.getRepository(User);
 
-/* ================================
-   Obtener todos los mensajes de un chat
-   - Admin: cualquier chat
-   - Cliente: solo su propio chat
-================================= */
+/* ==========================================================
+   Obtener mensajes de un chat
+========================================================== */
 export const getMessagesByChat = async (req: Request, res: Response) => {
   try {
     const { chatId } = req.params;
@@ -28,13 +25,13 @@ export const getMessagesByChat = async (req: Request, res: Response) => {
 
     // Si es cliente, solo puede ver su propio chat
     if (req.user!.tipo.toLowerCase() === "cliente" && chat.cliente.id !== userId) {
-      return res.status(403).json({ message: "No autorizado para ver estos mensajes" });
+      return res.status(403).json({ message: "No autorizado" });
     }
 
     const mensajes = await mensajeRepo.find({
       where: { chat: { id: chat.id } },
-      relations: ["sender"],
-      order: { created_at: "ASC" },
+      relations: ["usuario", "administrador"],
+      order: { fecha: "ASC" },
     });
 
     return res.json(mensajes);
@@ -43,10 +40,9 @@ export const getMessagesByChat = async (req: Request, res: Response) => {
   }
 };
 
-/* ================================
+/* ==========================================================
    Enviar mensaje a un chat
-   - Admin o Cliente
-================================= */
+========================================================== */
 export const sendMessageToChat = async (req: Request, res: Response) => {
   try {
     const { chatId } = req.params;
@@ -62,21 +58,37 @@ export const sendMessageToChat = async (req: Request, res: Response) => {
 
     if (!chat) return res.status(404).json({ message: "Chat no encontrado" });
 
-    // Clientes solo pueden enviar a su propio chat
-    if (req.user!.tipo.toLowerCase() === "cliente" && chat.cliente.id !== userId) {
-      return res.status(403).json({ message: "No autorizado para enviar mensajes a este chat" });
+    let newMessage: Mensaje;
+
+    if (req.user!.tipo.toLowerCase() === "cliente") {
+      if (chat.cliente.id !== userId)
+        return res.status(403).json({ message: "No autorizado" });
+
+      const user = await userRepo.findOneBy({ id: userId });
+      if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
+
+      newMessage = mensajeRepo.create({
+        chat,
+        usuario: user,
+        administrador: undefined,
+        mensaje: message,
+        leido: false,
+      });
+    } else {
+      // Admin
+      const admin = await userRepo.findOneBy({ id: userId });
+      if (!admin) return res.status(404).json({ message: "Administrador no encontrado" });
+
+      newMessage = mensajeRepo.create({
+        chat,
+        usuario: undefined,
+        administrador: admin,
+        mensaje: message,
+        leido: false,
+      });
     }
 
-    const user = await userRepo.findOneBy({ id: userId });
-
-    const newMessage = mensajeRepo.create({
-      chat,
-      sender: user!,
-      message,
-    });
-
     await mensajeRepo.save(newMessage);
-
     return res.status(201).json(newMessage);
   } catch (error) {
     return res.status(500).json({ message: "Error enviando mensaje", error });

@@ -4,25 +4,38 @@ import {
   ManyToOne,
   Column,
   CreateDateColumn,
+  JoinColumn,
 } from "typeorm";
 
 import { User } from "./User";
 import { Chat } from "./Chat";
 
-@Entity("messages")
+@Entity("mensajes")
 export class Mensaje {
   @PrimaryGeneratedColumn()
   id!: number;
 
+  // 🔗 usuario_id → User
+  @ManyToOne(() => User, (user) => user.mensajes)
+  @JoinColumn({ name: "usuario_id" })
+  usuario!: User;
+
+  // 🔗 administrador_id → User
+  @ManyToOne(() => User)
+  @JoinColumn({ name: "administrador_id" })
+  administrador!: User;
+
+  // 🔗 chat_id → Chat
   @ManyToOne(() => Chat, (chat) => chat.mensajes)
+  @JoinColumn({ name: "chat_id" })
   chat!: Chat;
 
-  @ManyToOne(() => User, (user) => user.mensajes)
-  sender!: User;
+  @Column("text", { name: "mensaje" })
+  mensaje!: string;
 
-  @Column("text")
-  message!: string;
+  @CreateDateColumn({ name: "fecha" })
+  fecha!: Date;
 
-  @CreateDateColumn()
-  created_at!: Date;
+  @Column("boolean", { name: "leido", default: false })
+  leido!: boolean;
 }

@@ -2,6 +2,8 @@
 import { DataSource } from "typeorm";
 import { User } from "../models/User";
 import { Vuelo } from "../models/vuelos";
+import { Chat } from "../models/Chat";
+import { Mensaje } from "../models/Mensaje";
 
 export const AppDataSource = new DataSource({
   type: "postgres",
@@ -12,7 +14,7 @@ export const AppDataSource = new DataSource({
   database: process.env.DB_NAME,
   synchronize: false, // En desarrollo puedes poner true temporalmente
   logging: true,
-  entities: [User, Vuelo],
+  entities: [User, Vuelo, Chat, Mensaje],
   migrations: [],
   subscribers: [],
   ssl: true,
