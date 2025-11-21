@@ -7,32 +7,40 @@ import userRoutes from './routes/userRoutes';
 import authRoutes from './routes/authRoutes';
 import rootRoutes from "./routes/rootRoutes";
 import vuelosRoutes from './routes/vuelosRoutes';
-import { authMiddleware, isAdmin, isRoot } from './middleware/authMiddleware';
-import { errorHandler } from "./middleware/errorHandler";;
+import { authMiddleware, isRoot } from './middleware/authMiddleware';
+import { errorHandler } from "./middleware/errorHandler";
 import cityRoutes from "./routes/cityCountries";
-
-
+import reservasRoutes from "./routes/reservasRoutes";
 
 const app = express();
 const PORT = process.env.PORT || 8000;
 
-// Middlewares
+// Middlewares globales
 app.use(cors());
 app.use(express.json());
 
-// Rutas
-app.use('/api/users', userRoutes);
+// Archivos estáticos
+app.use("/uploads", express.static("uploads"));
+
+// ============ RUTAS PÚBLICAS Y DE AUTH ============
 app.use('/api', authRoutes);
 app.use('/api/cities', cityRoutes);
-app.use("/uploads", express.static("uploads"));
+
+// ============ RUTAS DE USUARIOS ============
+app.use('/api/users', userRoutes);
+
+// ============ RUTAS DE VUELOS ============
 app.use('/api/flights', vuelosRoutes);
 
-app.use('/api', rootRoutes);
+// ============ RUTAS DE RESERVAS (para clientes autenticados) ============
+// El middleware de auth ya está dentro de reservasRoutes
+app.use("/api/reservas", reservasRoutes);
 
-app.use('/api', authMiddleware, isRoot, rootRoutes);
+// ============ RUTAS DE ROOT (solo usuarios root) ============
+app.use('/api/root', authMiddleware, isRoot, rootRoutes);
 
+// ============ MANEJO DE ERRORES (siempre al final) ============
 app.use(errorHandler);
-
 
 // Inicializar DB y servidor
 AppDataSource.initialize()
