@@ -1,12 +1,13 @@
 // frontend/src/components/cliente/NavbarCliente.tsx
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
 const NavbarCliente: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [userName, setUserName] = useState("Cliente");
   
   useEffect(() => {
@@ -37,15 +38,39 @@ const NavbarCliente: React.FC = () => {
 
   const userInitial = userName.charAt(0).toUpperCase();
 
+  // Helper para saber si el link está activo
+  const isActive = (path: string) => location.pathname === path;
+
+  const linkClass = (path: string) =>
+    `text-white transition ${
+      isActive(path) 
+        ? "font-bold underline underline-offset-4" 
+        : "hover:underline"
+    }`;
+
   return (
     <nav className="bg-gradient-to-r from-[#005f7f] to-[#003b5eff] p-4 flex justify-between items-center shadow-md">
       {/* Lado izquierdo: navegación */}
       <div className="flex space-x-8 items-center">
-        <Link to="/foro" className="text-white hover:underline">Foro</Link>
-        <Link to="/noticias" className="text-white hover:underline">Noticias</Link>
-        <Link to="/perfil-cliente" className="text-white hover:underline">Perfil</Link>
-        <Link to="/historial" className="text-white hover:underline">Historial</Link>
-        <Link to="/checkin" className="text-white hover:underline">Check in</Link>
+        {/* ✅ NUEVO: Link al panel principal */}
+        <Link to="/cliente" className={linkClass("/cliente")}>
+          🏠 Inicio
+        </Link>
+        <Link to="/historial" className={linkClass("/historial")}>
+          Historial
+        </Link>
+        <Link to="/perfil-cliente" className={linkClass("/perfil-cliente")}>
+          Perfil
+        </Link>
+        <Link to="/checkin" className={linkClass("/checkin")}>
+          Check in
+        </Link>
+        <Link to="/foro" className={linkClass("/foro")}>
+          Foro
+        </Link>
+        <Link to="/noticias" className={linkClass("/noticias")}>
+          Noticias
+        </Link>
         <button
           onClick={handleLogout}
           className="bg-transparent border-none text-white hover:underline cursor-pointer"

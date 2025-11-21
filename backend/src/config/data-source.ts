@@ -4,6 +4,7 @@ import { User } from "../models/User";
 import { Vuelo } from "../models/vuelos";
 import { Chat } from "../models/Chat";
 import { Mensaje } from "../models/Mensaje";
+import { Reserva } from "../models/Reserva";
 
 export const AppDataSource = new DataSource({
   type: "postgres",
@@ -12,9 +13,9 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  synchronize: false, // En desarrollo puedes poner true temporalmente
+  synchronize: false,
   logging: true,
-  entities: [User, Vuelo, Chat, Mensaje],
+  entities: [User, Vuelo, Chat, Mensaje, Reserva],
   migrations: [],
   subscribers: [],
   ssl: true,

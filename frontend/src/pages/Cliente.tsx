@@ -1,6 +1,7 @@
-// frontend/src/pages/ClientePage.tsx
+// frontend/src/pages/Cliente.tsx
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../components/cliente/NavbarCliente";
 import Footer from "../components/Footer";
 import "./Cliente.css";
@@ -9,166 +10,262 @@ const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
 interface Vuelo {
   id: number;
-  codigo: string;
+  codigoVuelo?: string;
+  codigo?: string;
   origen: string;
   destino: string;
-  horaSalida: string;
-  horaLlegada: string;
-  precio: number;
-}
-
-interface Reserva {
-  id: number;
-  vuelo: string;
-  estado: "Reservado" | "Comprado" | "Cancelado";
+  hora?: string;
+  horaSalida?: string;
+  horaLlegada?: string;
+  costoBase?: number;
+  precio?: number;
+  estado?: string;
+  esInternacional?: boolean;
 }
 
 const Cliente: React.FC = () => {
+  const navigate = useNavigate();
   const [vuelos, setVuelos] = useState<Vuelo[]>([]);
-  const [reservas, setReservas] = useState<Reserva[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [procesando, setProcesando] = useState<number | null>(null);
 
-  // Traer vuelos disponibles
   const fetchVuelos = async () => {
     setLoading(true);
+    setError(null);
     try {
       const token = localStorage.getItem("token");
       const res = await axios.get(`${API_BASE}/api/flights`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
 
-      setVuelos(
-        res.data.results && res.data.results.length > 0
-          ? res.data.results
-          : [
-              {
-                id: 1,
-                codigo: "AV101",
-                origen: "Bogotá",
-                destino: "Madrid",
-                horaSalida: "2025-09-23T10:00",
-                horaLlegada: "2025-09-23T20:00",
-                precio: 1200,
-              },
-              {
-                id: 2,
-                codigo: "AV102",
-                origen: "Medellín",
-                destino: "New York",
-                horaSalida: "2025-09-23T12:00",
-                horaLlegada: "2025-09-23T19:00",
-                precio: 950,
-              },
-            ]
+      const vuelosData = res.data.results || res.data.vuelos || res.data || [];
+      
+      // Filtrar solo vuelos disponibles (no cancelados)
+      const vuelosDisponibles = vuelosData.filter(
+        (v: Vuelo) => v.estado !== "cancelado"
       );
-    } catch (err) {
-      setError("No se pudieron cargar los vuelos. Mostrando datos de ejemplo.");
-      setVuelos([
-        {
-          id: 1,
-          codigo: "AV101",
-          origen: "Bogotá",
-          destino: "Madrid",
-          horaSalida: "2025-09-23T10:00",
-          horaLlegada: "2025-09-23T20:00",
-          precio: 1200,
-        },
-        {
-          id: 2,
-          codigo: "AV102",
-          origen: "Medellín",
-          destino: "New York",
-          horaSalida: "2025-09-23T12:00",
-          horaLlegada: "2025-09-23T19:00",
-          precio: 950,
-        },
-      ]);
+
+      setVuelos(vuelosDisponibles);
+    } catch (err: any) {
+      console.error("Error cargando vuelos:", err);
+      setError("No se pudieron cargar los vuelos");
     } finally {
       setLoading(false);
     }
   };
 
-  // Reservas simuladas
-  const fetchReservas = async () => {
-    setReservas([
-      { id: 1, vuelo: "Bogotá → Miami", estado: "Reservado" },
-      { id: 2, vuelo: "Medellín → Madrid", estado: "Comprado" },
-      { id: 3, vuelo: "Cali → Buenos Aires", estado: "Cancelado" },
-    ]);
-  };
-
   useEffect(() => {
     fetchVuelos();
-    fetchReservas();
   }, []);
+
+  const handleReservar = async (vuelo: Vuelo) => {
+    const confirmacion = window.confirm(
+      `¿Deseas reservar el vuelo ${vuelo.origen} → ${vuelo.destino}?`
+    );
+    if (!confirmacion) return;
+
+    setProcesando(vuelo.id);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Debes iniciar sesión para reservar");
+        navigate("/login");
+        return;
+      }
+
+      await axios.post(
+        `${API_BASE}/api/reservas`,
+        {
+          vueloId: vuelo.id,
+          tipo: "reserva",
+          numeroPasajeros: 1,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      alert("✅ ¡Reserva creada exitosamente!");
+      navigate("/historial");
+    } catch (err: any) {
+      console.error("Error creando reserva:", err);
+      alert(err.response?.data?.message || "Error al crear la reserva");
+    } finally {
+      setProcesando(null);
+    }
+  };
+
+  const handleComprar = async (vuelo: Vuelo) => {
+    const confirmacion = window.confirm(
+      `¿Deseas comprar el vuelo ${vuelo.origen} → ${vuelo.destino}?\nPrecio: $${(
+        vuelo.costoBase || vuelo.precio || 0
+      ).toLocaleString("es-CO")}`
+    );
+    if (!confirmacion) return;
+
+    setProcesando(vuelo.id);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Debes iniciar sesión para comprar");
+        navigate("/login");
+        return;
+      }
+
+      await axios.post(
+        `${API_BASE}/api/reservas`,
+        {
+          vueloId: vuelo.id,
+          tipo: "compra",
+          numeroPasajeros: 1,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      alert("✅ ¡Compra realizada exitosamente!");
+      navigate("/historial");
+    } catch (err: any) {
+      console.error("Error creando compra:", err);
+      alert(err.response?.data?.message || "Error al realizar la compra");
+    } finally {
+      setProcesando(null);
+    }
+  };
+
+  const formatFecha = (fecha?: string) => {
+    if (!fecha) return "Por definir";
+    try {
+      return new Date(fecha).toLocaleString("es-CO", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return fecha;
+    }
+  };
 
   return (
     <div className="page">
       <Navbar />
 
       <main className="cliente-main">
-        {/* Header */}
         <header className="cliente-header">
           <h1>🎯 Panel de Cliente</h1>
-          <p>Gestiona tus vuelos, reservas y perfil desde un solo lugar.</p>
+          <p>Encuentra y reserva tus vuelos favoritos</p>
         </header>
 
-        {/* Dashboard */}
         <section className="cliente-dashboard">
-          {/* Buscar vuelos */}
           <div className="card card--wide">
-            <h2>🔍 Buscar vuelos</h2>
-            {loading && <p>Cargando vuelos...</p>}
-            {error && <p className="error">{error}</p>}
+            <div className="flex justify-between items-center mb-6">
+              <h2>✈️ Vuelos disponibles</h2>
+              <button
+                onClick={() => navigate("/search")}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+              >
+                🔍 Buscar vuelos
+              </button>
+            </div>
 
-            {vuelos.length > 0 ? (
+            {loading && (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="mt-4 text-gray-600">Cargando vuelos...</p>
+              </div>
+            )}
+
+            {error && (
+              <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+                <p className="text-red-700">{error}</p>
+              </div>
+            )}
+
+            {!loading && vuelos.length === 0 && (
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">✈️</div>
+                <p className="text-gray-600">
+                  No hay vuelos disponibles en este momento
+                </p>
+              </div>
+            )}
+
+            {!loading && vuelos.length > 0 && (
               <ul className="flights-grid">
-                {vuelos.map((v) => (
-                  <li key={v.id} className="flight-card">
-                    <div className="flight-header">
-                      <p className="flight-route">
-                        {v.origen} → {v.destino}
+                {vuelos.map((v) => {
+                  const codigo = v.codigoVuelo || v.codigo || "N/A";
+                  const horaSalida = v.hora || v.horaSalida;
+                  const precio = v.costoBase || v.precio || 0;
+
+                  return (
+                    <li key={v.id} className="flight-card">
+                      <div className="flight-header">
+                        <p className="flight-route">
+                          {v.origen} → {v.destino}
+                        </p>
+                        <span className="flight-code">{codigo}</span>
+                        {v.esInternacional && (
+                          <span className="inline-block px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold ml-2">
+                            🌍 Internacional
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="flight-info">
+                        🛫 Salida: {formatFecha(horaSalida)}
                       </p>
-                      <span className="flight-code">{v.codigo}</span>
-                    </div>
+                      <p className="flight-info">
+                        🛬 Llegada: {formatFecha(v.horaLlegada)}
+                      </p>
+                      <p className="flight-price">
+                        💲 ${precio.toLocaleString("es-CO")} COP
+                      </p>
 
-                    <p className="flight-info">
-                      🛫 Salida:{" "}
-                      {v.horaSalida
-                        ? new Date(v.horaSalida).toLocaleString("es-CO")
-                        : "Por definir"}
-                    </p>
-                    <p className="flight-info">
-                      🛬 Llegada:{" "}
-                      {v.horaLlegada
-                        ? new Date(v.horaLlegada).toLocaleString("es-CO")
-                        : "Por definir"}
-                    </p>
-                    <p className="flight-price">💲 {v.precio}</p>
-
-                    <div className="flight-actions">
-                      <button className="btn">Reservar</button>
-                      <button className="btn btn--secondary">Comprar</button>
-                    </div>
-                  </li>
-                ))}
+                      <div className="flight-actions">
+                        <button
+                          onClick={() => handleReservar(v)}
+                          disabled={procesando === v.id}
+                          className="btn"
+                        >
+                          {procesando === v.id ? "⏳" : "📌 Reservar"}
+                        </button>
+                        <button
+                          onClick={() => handleComprar(v)}
+                          disabled={procesando === v.id}
+                          className="btn btn--secondary"
+                        >
+                          {procesando === v.id ? "⏳" : "💳 Comprar"}
+                        </button>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
-            ) : (
-              <p>No hay vuelos disponibles</p>
             )}
           </div>
 
-          {/* Mis reservas */}
           <div className="card">
-            <h2>🎟️ Mis reservas y compras</h2>
-            <ul className="list">
-              {reservas.map((r) => (
-                <li key={r.id} className={r.estado.toLowerCase()}>
-                  ✈️ {r.vuelo} <span>({r.estado})</span>
-                </li>
-              ))}
-            </ul>
+            <h2>📋 Accesos rápidos</h2>
+            <div className="space-y-3">
+              <button
+                onClick={() => navigate("/historial")}
+                className="w-full text-left px-4 py-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition"
+              >
+                📜 Ver mi historial
+              </button>
+              <button
+                onClick={() => navigate("/perfil-cliente")}
+                className="w-full text-left px-4 py-3 bg-green-50 hover:bg-green-100 rounded-lg transition"
+              >
+                👤 Mi perfil
+              </button>
+              <button
+                onClick={() => navigate("/search")}
+                className="w-full text-left px-4 py-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition"
+              >
+                🔍 Buscar vuelos específicos
+              </button>
+            </div>
           </div>
         </section>
       </main>
