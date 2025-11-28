@@ -1,11 +1,8 @@
-// src/pages/ForoAdminLista.tsx
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
-
+import { useNavigate,useLocation } from "react-router-dom";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
-
 
 interface Usuario {
   id: number;
@@ -18,33 +15,48 @@ interface Mensaje {
   fecha: string;
   usuario?: Usuario;
   administrador?: Usuario;
+  leido: boolean;
 }
 
 interface Chat {
   id: number;
   cliente: Usuario;
   mensajes: Mensaje[];
+  tieneNoLeidos?: boolean;
 }
 
 const ForoAdminLista: React.FC = () => {
   const navigate = useNavigate();
   const [chats, setChats] = useState<Chat[]>([]);
   const token = localStorage.getItem("token");
+  const location = useLocation();
+
 
   useEffect(() => {
-    const fetchChats = async () => {
-      try {
-        const res = await axios.get(`${API_BASE}/api/chats/all`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setChats(res.data);
-      } catch (err) {
-        console.error("Error cargando chats:", err);
-      }
-    };
+  const fetchChats = async () => {
+    try {
+      const res = await axios.get(`${API_BASE}/api/chats/all`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setChats(res.data);
+    } catch (err) {
+      console.error("Error cargando chats:", err);
+    }
+  };
 
-    fetchChats();
-  }, [token]);
+  fetchChats();
+
+  const handleFocus = () => fetchChats(); // refresca al volver a la pestaña o ruta
+  window.addEventListener("focus", handleFocus);
+
+  return () => {
+    window.removeEventListener("focus", handleFocus);
+  };
+}, [token]);
+
+
+
+
 
   const getUltimoMensaje = (mensajes: Mensaje[]) => {
     if (!mensajes || mensajes.length === 0) return { texto: "Sin mensajes", fecha: "" };
@@ -55,6 +67,25 @@ const ForoAdminLista: React.FC = () => {
     } catch {}
     return { texto: ultimo.mensaje, fecha };
   };
+
+  const abrirChat = async (chat: Chat) => {
+  navigate(`/admin/chat/${chat.id}`);
+  try {
+    // Marcar mensajes como leídos
+    await axios.post(`${API_BASE}/api/chats/${chat.id}/leer`, {}, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    // Recargar todos los chats desde el backend
+    const res = await axios.get(`${API_BASE}/api/chats/all`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setChats(res.data); // ahora el estado está actualizado
+  } catch (err) {
+    console.error("Error marcando mensajes como leídos", err);
+  }
+};
+
 
   return (
     <div
@@ -90,23 +121,25 @@ const ForoAdminLista: React.FC = () => {
         {/* LISTA */}
         <div className="relative z-10 space-y-4">
           {chats.length > 0 ? (
-            chats.map((chat) => {
+            chats.map(chat => {
               const { texto, fecha } = getUltimoMensaje(chat.mensajes);
               return (
                 <div
                   key={chat.id}
-                  onClick={() => navigate(`/admin/chat/${chat.id}`)}
-                  className="p-4 bg-white/90 backdrop-blur-sm border border-gray-300 shadow-md rounded-xl cursor-pointer
-                  hover:bg-white hover:shadow-lg transition duration-200"
+                  onClick={() => abrirChat(chat)}
+                  className={`p-4 bg-white/90 backdrop-blur-sm border shadow-md rounded-xl cursor-pointer
+                              hover:bg-white hover:shadow-lg transition duration-200
+                              ${chat.tieneNoLeidos ? "border-amber-500" : "border-gray-300"}`}
                 >
-                  <h2 className="text-xl font-semibold text-gray-800">
+                  <h2 className="text-xl font-semibold text-gray-800 flex items-center">
                     {chat.cliente.nombres}
+                    {chat.tieneNoLeidos && (
+                      <span className="ml-2 w-3 h-3 bg-red-500 rounded-full"></span>
+                    )}
                   </h2>
                   <p className="text-gray-600 text-sm mt-1">{texto}</p>
                   {fecha && (
-                    <p className="text-gray-400 text-xs mt-1 text-right">
-                      {fecha}
-                    </p>
+                    <p className="text-gray-400 text-xs mt-1 text-right">{fecha}</p>
                   )}
                 </div>
               );

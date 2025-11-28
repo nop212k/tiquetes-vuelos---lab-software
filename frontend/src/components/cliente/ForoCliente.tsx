@@ -23,7 +23,11 @@ interface Chat {
   mensajes: Mensaje[];
 }
 
-const ForoCliente: React.FC = () => {
+interface ForoClienteProps {
+  setTieneNoLeidos: (val: boolean) => void;
+}
+
+const ForoCliente: React.FC<ForoClienteProps> = ({ setTieneNoLeidos }) => {
   const [chat, setChat] = useState<Chat | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
@@ -67,6 +71,26 @@ const ForoCliente: React.FC = () => {
     scrollToBottom();
   }, [chat]);
 
+  useEffect(() => {
+  const marcarLeidos = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      await axios.put(`${API_BASE}/api/chats/marcar-leidos-cliente`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setTieneNoLeidos(false); // quitar puntito verde
+    } catch (err) {
+      console.error("Error marcando mensajes como leídos:", err);
+    }
+  };
+
+  marcarLeidos();
+}, []);
+
+
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !chat) return;
 
@@ -77,9 +101,13 @@ const ForoCliente: React.FC = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      setChat((prev) =>
-        prev ? { ...prev, mensajes: [...prev.mensajes, res.data] } : prev
-      );
+      setChat(prev => {
+          if (!prev) return prev;
+          const nuevosMensajes = prev.mensajes.map(m => 
+            m.administrador ? { ...m, leido: true } : m
+          );
+          return { ...prev, mensajes: nuevosMensajes };
+        });
       setNewMessage("");
     } catch (err) {
       console.error("Error enviando mensaje:", err);

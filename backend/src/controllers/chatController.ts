@@ -4,6 +4,8 @@ import { AppDataSource } from "../config/data-source";
 import { Chat } from "../models/Chat";
 import { Mensaje } from "../models/Mensaje";
 import { User } from "../models/User";
+import { IsNull, Not } from "typeorm";
+
 
 /* ==========================================================
    REPOSITORIOS
@@ -42,7 +44,7 @@ export const createClientChat = async (req: Request, res: Response) => {
 /* ==========================================================
    CLIENTE OBTIENE SU CHAT (o lo crea si no existe)
 ========================================================== */
-// Backend: getClientChat.ts
+
 export const getClientChat = async (req: Request, res: Response) => {
   try {
     const userId = req.user!.id;
@@ -131,6 +133,58 @@ export const sendClientMessage = async (req: Request, res: Response) => {
   }
 };
 
+
+/* EL CLIENTE VE QUE TIENE MENSAJES NO LEIDOS */
+export const getMensajesNoLeidosCliente = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.id;
+
+    // Obtener el chat del cliente
+    const chat = await chatRepo.findOne({ where: { cliente: { id: userId } } });
+    if (!chat) return res.status(404).json({ message: "Chat no encontrado." });
+
+    // Contar mensajes de admin no leídos
+    const count = await mensajeRepo.count({
+      where: {
+        chat: { id: chat.id },
+        administrador: { id: Not(IsNull()) },
+        leido: false,
+      },
+    });
+
+    return res.json({ tieneNoLeidos: count > 0 });
+  } catch (error) {
+    return res.status(500).json({ message: "Error obteniendo mensajes no leídos", error });
+  }
+};
+
+/* ==========================================================
+   CLIENTE — MARCAR MENSAJES DE ADMIN COMO LEÍDOS
+========================================================== */
+export const marcarMensajesLeidosCliente = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.id;
+
+    // Obtener chat del cliente
+    const chat = await chatRepo.findOne({ where: { cliente: { id: userId } } });
+    if (!chat) return res.status(404).json({ message: "Chat no encontrado." });
+
+    // Marcar como leídos los mensajes de admin
+    await mensajeRepo
+      .createQueryBuilder()
+      .update()
+      .set({ leido: true })
+      .where("chat_id = :chatId", { chatId: chat.id })
+      .andWhere("administrador_id IS NOT NULL") // solo admin
+      .andWhere("leido = false")
+      .execute();
+
+    return res.status(200).json({ message: "Mensajes marcados como leídos" });
+  } catch (error) {
+    return res.status(500).json({ message: "Error marcando mensajes", error });
+  }
+};
+
 /* ==========================================================
    ADMIN ENVÍA MENSAJE
 ========================================================== */
@@ -178,9 +232,39 @@ export const getAllChats = async (req: Request, res: Response) => {
       .addOrderBy("mensaje.fecha", "ASC")
       .getMany();
 
-    return res.json(chats); // Devuelve todos los mensajes
+    const chatsConEstado = chats.map(chat => {
+      const tieneNoLeidos = chat.mensajes.some(
+        m => !m.leido && m.usuario // mensajes de cliente no leídos
+      );
+      return { ...chat, tieneNoLeidos };
+    });
+
+    return res.json(chatsConEstado); // Devuelve todos los mensajes
   } catch (error) {
     return res.status(500).json({ message: "Error obteniendo chats", error });
+  }
+};
+
+/* ==========================================================
+   MARCAR MENSAJES COMO LEÍDOS (cuando admin abre el chat)
+========================================================== */
+export const marcarMensajesLeidos = async (req: Request, res: Response) => {
+  try {
+    const { chatId } = req.params;
+
+    await mensajeRepo
+  .createQueryBuilder()
+  .update(Mensaje)
+  .set({ leido: true })
+  .where("chat_id = :chatId", { chatId })
+  .andWhere("usuario_id IS NOT NULL") // solo mensajes de cliente
+  .andWhere("leido = false")
+  .execute();
+
+
+    return res.status(200).json({ message: "Mensajes marcados como leídos" });
+  } catch (error) {
+    return res.status(500).json({ message: "Error marcando mensajes", error });
   }
 };
 

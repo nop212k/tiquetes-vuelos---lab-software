@@ -9,7 +9,10 @@ import {
   getAllChats,
   getChatById,
   getMessagesByChatId,
-  sendAdminMessage
+  sendAdminMessage,
+  marcarMensajesLeidos,
+  marcarMensajesLeidosCliente,
+  getMensajesNoLeidosCliente
 } from "../controllers/chatController";
 
 const router = Router();
@@ -30,6 +33,13 @@ router.get("/messages", authMiddleware, getClientMessages);
 // Cliente envía mensaje en su chat
 router.post("/messages", authMiddleware, sendClientMessage);
 
+// Cliente marca mensajes de admin como leídos
+router.put("/marcar-leidos-cliente", authMiddleware, marcarMensajesLeidosCliente);
+
+// Cliente tiene mensajes no leidos
+router.get("/tiene-no-leidos", authMiddleware, getMensajesNoLeidosCliente);
+
+
 
 /* =======================
    RUTAS PARA ADMIN
@@ -46,5 +56,8 @@ router.get("/:chatId/messages", authMiddleware, isAdmin, getMessagesByChatId);
 
 // Admin envía mensaje en un chat específico
 router.post("/:chatId/messages", authMiddleware, isAdmin, sendAdminMessage);
+
+// Admin abre chat -> marcar como leídos
+router.post("/:chatId/leer", authMiddleware, isAdmin, marcarMensajesLeidos);
 
 export default router;
