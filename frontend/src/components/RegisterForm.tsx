@@ -6,6 +6,7 @@ import * as z from "zod";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import "react-datepicker/dist/react-datepicker.css";
+import { postLogin } from "../services/api";
 import DatePicker from "react-datepicker";
 import "./RegisterForm.css";
 
@@ -178,18 +179,33 @@ export default function RegisterForm({ isRoot = false }: RegisterFormProps) {
 
       const base = import.meta.env.VITE_API_BASE || "http://localhost:8000";
       const endpoint = isRoot ? `${base}/api/users/register-root` : `${base}/api/users/register`;
+      const rootToken = localStorage.getItem("token");
 
       const res = await fetch(endpoint, {
         method: "POST",
         body: formData,
-        headers: isRoot ? { Authorization: `Bearer ${localStorage.getItem("token")}` } : {},
+        headers: isRoot && rootToken ? { Authorization: `Bearer ${rootToken}` } : {},
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ message: "Error en registro" }));
         throw new Error(err.message || "Error en registro");
       }
       if (isRoot) {
-        toast.success("Administrador registrado correctamente 🎉");
+        const message = rootToken
+          ? "Administrador registrado correctamente ✅"
+          : "Cuenta root creada. Iniciando sesión automáticamente...";
+        toast.success(message);
+
+        if (!rootToken) {
+          try {
+            const loginResult = await postLogin({ login: data.usuario, password: data.contrasena });
+            localStorage.setItem("token", loginResult.token);
+            localStorage.setItem("user", JSON.stringify(loginResult.user || { tipo: loginResult.tipoUsuario }));
+          } catch (err: any) {
+            console.error("Error iniciando sesión automáticamente:", err);
+            toast.error("No fue posible iniciar sesión automáticamente. Por favor, inicia sesión manualmente.");
+          }
+        }
         setTimeout(() => navigate("/root"), 2000);
       } else {
         toast.success("Registro exitoso 🎉");
@@ -199,7 +215,6 @@ export default function RegisterForm({ isRoot = false }: RegisterFormProps) {
       toast.error(err?.message || "Error al registrar");
     }
   }
-
   const authInputCls =
     "border p-2 rounded bg-white text-black placeholder-gray-400 auth-input [appearance:auto] [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:block [&::-webkit-calendar-picker-indicator]:cursor-pointer";
 

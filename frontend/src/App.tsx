@@ -23,6 +23,7 @@ import ForoCliente from "./components/cliente/ForoCliente";
 import ForoAdminLista from "./components/admin/ForoAdminLista";
 import ForoAdminChat from "./components/admin/ForoAdminChat";
 import Checkout from "./pages/Checkout"; // ✅ AGREGADO: Import de Checkout
+import RegisterAdmin from "./pages/RegistroAdmin";
 
 function App() {
   useEffect(() => {
@@ -36,6 +37,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/registro" element={<RegisterPage />} />
+        <Route path="/registro-admin" element={<ProtectedRoute requiredRole="root"><RegisterAdmin /></ProtectedRoute>} />
         <Route path="/login" element={<LoginPage />} />
         
         {/* Rutas de Cliente */}
