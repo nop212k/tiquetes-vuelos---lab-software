@@ -28,7 +28,8 @@ const Cliente: React.FC = () => {
   const [vuelos, setVuelos] = useState<Vuelo[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [procesando, setProcesando] = useState<number | null>(null);
+  // ✅ ELIMINADO: const [procesando, setProcesando] = useState<number | null>(null);
+  // Ya no se necesita porque no procesamos aquí, vamos al checkout
 
   const fetchVuelos = async () => {
     setLoading(true);
@@ -59,76 +60,66 @@ const Cliente: React.FC = () => {
     fetchVuelos();
   }, []);
 
-  const handleReservar = async (vuelo: Vuelo) => {
+  // ✅ MODIFICADO: handleReservar ahora redirige al checkout
+  const handleReservar = (vuelo: Vuelo) => {
     const confirmacion = window.confirm(
-      `¿Deseas reservar el vuelo ${vuelo.origen} → ${vuelo.destino}?`
+      `¿Deseas reservar el vuelo ${vuelo.origen} → ${vuelo.destino}?\n\nSerás redirigido a la página de pago.`
     );
     if (!confirmacion) return;
 
-    setProcesando(vuelo.id);
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        alert("Debes iniciar sesión para reservar");
-        navigate("/login");
-        return;
-      }
-
-      await axios.post(
-        `${API_BASE}/api/reservas`,
-        {
-          vueloId: vuelo.id,
-          tipo: "reserva",
-          numeroPasajeros: 1,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      alert("✅ ¡Reserva creada exitosamente!");
-      navigate("/historial");
-    } catch (err: any) {
-      console.error("Error creando reserva:", err);
-      alert(err.response?.data?.message || "Error al crear la reserva");
-    } finally {
-      setProcesando(null);
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Debes iniciar sesión para reservar");
+      navigate("/login");
+      return;
     }
+
+    // Redirigir al checkout con los datos del vuelo
+    navigate("/checkout", {
+      state: {
+        vueloId: vuelo.id,
+        numeroPasajeros: 1,
+        tipo: "reserva",
+        vuelo: {
+          origen: vuelo.origen,
+          destino: vuelo.destino,
+          codigo: vuelo.codigoVuelo || vuelo.codigo || "N/A",
+          precio: vuelo.costoBase || vuelo.precio || 0,
+        },
+      },
+    });
   };
 
-  const handleComprar = async (vuelo: Vuelo) => {
+  // ✅ MODIFICADO: handleComprar ahora redirige al checkout
+  const handleComprar = (vuelo: Vuelo) => {
     const confirmacion = window.confirm(
       `¿Deseas comprar el vuelo ${vuelo.origen} → ${vuelo.destino}?\nPrecio: $${(
         vuelo.costoBase || vuelo.precio || 0
-      ).toLocaleString("es-CO")}`
+      ).toLocaleString("es-CO")}\n\nSerás redirigido a la página de pago.`
     );
     if (!confirmacion) return;
 
-    setProcesando(vuelo.id);
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        alert("Debes iniciar sesión para comprar");
-        navigate("/login");
-        return;
-      }
-
-      await axios.post(
-        `${API_BASE}/api/reservas`,
-        {
-          vueloId: vuelo.id,
-          tipo: "compra",
-          numeroPasajeros: 1,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      alert("✅ ¡Compra realizada exitosamente!");
-      navigate("/historial");
-    } catch (err: any) {
-      console.error("Error creando compra:", err);
-      alert(err.response?.data?.message || "Error al realizar la compra");
-    } finally {
-      setProcesando(null);
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Debes iniciar sesión para comprar");
+      navigate("/login");
+      return;
     }
+
+    // Redirigir al checkout con los datos del vuelo
+    navigate("/checkout", {
+      state: {
+        vueloId: vuelo.id,
+        numeroPasajeros: 1,
+        tipo: "compra",
+        vuelo: {
+          origen: vuelo.origen,
+          destino: vuelo.destino,
+          codigo: vuelo.codigoVuelo || vuelo.codigo || "N/A",
+          precio: vuelo.costoBase || vuelo.precio || 0,
+        },
+      },
+    });
   };
 
   const formatFecha = (fecha?: string) => {
@@ -221,20 +212,19 @@ const Cliente: React.FC = () => {
                         💲 ${precio.toLocaleString("es-CO")} COP
                       </p>
 
+                      {/* ✅ MODIFICADO: Eliminado disabled={procesando === v.id} */}
                       <div className="flight-actions">
                         <button
                           onClick={() => handleReservar(v)}
-                          disabled={procesando === v.id}
                           className="btn"
                         >
-                          {procesando === v.id ? "⏳" : "📌 Reservar"}
+                          📌 Reservar
                         </button>
                         <button
                           onClick={() => handleComprar(v)}
-                          disabled={procesando === v.id}
                           className="btn btn--secondary"
                         >
-                          {procesando === v.id ? "⏳" : "💳 Comprar"}
+                          💳 Comprar
                         </button>
                       </div>
                     </li>

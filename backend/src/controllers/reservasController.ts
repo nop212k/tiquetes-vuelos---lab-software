@@ -3,15 +3,40 @@ import { Request, Response } from "express";
 import { AppDataSource } from "../config/data-source";
 import { Reserva, TipoTransaccion, EstadoTransaccion } from "../models/Reserva";
 import { Vuelo } from "../models/vuelos";
+import Stripe from "stripe";
+
+// ✅ CORREGIDO: Cambiar la versión de API o eliminarla
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
+// Si necesitas especificar versión, usa una compatible como:
+// const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
+//   apiVersion: "2023-10-16",
+// });
 
 // Crear una nueva reserva o compra
 export const crearReserva = async (req: Request, res: Response) => {
   try {
-    const { vueloId, tipo, numeroPasajeros, notas } = req.body;
+    const { vueloId, tipo, numeroPasajeros, notas, paymentIntentId } = req.body;
     const userId = (req as any).user?.id;
 
     if (!userId) {
       return res.status(401).json({ message: "No autorizado" });
+    }
+
+    // Verificar pago si es compra o reserva con pago
+    if (paymentIntentId) {
+      try {
+        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+        
+        if (paymentIntent.status !== "succeeded") {
+          return res.status(400).json({ 
+            message: "El pago no ha sido completado exitosamente" 
+          });
+        }
+      } catch (error) {
+        return res.status(400).json({ 
+          message: "No se pudo verificar el pago" 
+        });
+      }
     }
 
     const vueloRepo = AppDataSource.getRepository(Vuelo);
@@ -173,10 +198,32 @@ export const cancelarReserva = async (req: Request, res: Response) => {
 export const convertirReservaEnCompra = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const { paymentIntentId } = req.body;
     const userId = (req as any).user?.id;
 
     if (!userId) {
       return res.status(401).json({ message: "No autorizado" });
+    }
+
+    // Verificar el pago
+    if (!paymentIntentId) {
+      return res.status(400).json({ 
+        message: "Se requiere completar el pago para confirmar la compra" 
+      });
+    }
+
+    try {
+      const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+      
+      if (paymentIntent.status !== "succeeded") {
+        return res.status(400).json({ 
+          message: "El pago no ha sido completado exitosamente" 
+        });
+      }
+    } catch (error) {
+      return res.status(400).json({ 
+        message: "No se pudo verificar el pago" 
+      });
     }
 
     const reservaRepo = AppDataSource.getRepository(Reserva);

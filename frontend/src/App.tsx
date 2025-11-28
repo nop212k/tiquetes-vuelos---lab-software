@@ -22,6 +22,7 @@ import { useEffect } from "react";
 import ForoCliente from "./components/cliente/ForoCliente";
 import ForoAdminLista from "./components/admin/ForoAdminLista";
 import ForoAdminChat from "./components/admin/ForoAdminChat";
+import Checkout from "./pages/Checkout"; // ✅ AGREGADO: Import de Checkout
 
 function App() {
   useEffect(() => {
@@ -42,6 +43,7 @@ function App() {
         <Route path="/perfil-cliente" element={<ProtectedRoute requiredRole="cliente"><PerfilCliente /></ProtectedRoute>}/>
         <Route path="/foro" element={<ProtectedRoute requiredRole="cliente"><ForoCliente /></ProtectedRoute>}/>
         <Route path="/historial" element={<ProtectedRoute requiredRole="cliente"><Historial /></ProtectedRoute>}/>
+        <Route path="/checkout" element={<ProtectedRoute requiredRole="cliente"><Checkout /></ProtectedRoute>}/> {/* ✅ AGREGADO: Ruta de checkout */}
         
         {/* Rutas de Root */}
         <Route path="/root" element={<ProtectedRoute requiredRole="root"><Root /></ProtectedRoute>}/>

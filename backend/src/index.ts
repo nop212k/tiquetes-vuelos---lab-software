@@ -13,6 +13,7 @@ import cityRoutes from "./routes/cityCountries";
 import chatRoutes from "./routes/chatRoutes";
 import mensajeRoutes from "./routes/mensajeRoutes";
 import reservasRoutes from "./routes/reservasRoutes";
+import stripeRoutes from "./routes/stripeRoutes"; // ✅ AGREGADO: Import de rutas de Stripe
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -40,6 +41,9 @@ app.use('/api/messages', mensajeRoutes);
 
 // ============ RUTAS DE RESERVAS (para clientes autenticados) ============
 app.use("/api/reservas", reservasRoutes);
+
+// ============ RUTAS DE STRIPE (pagos) ============
+app.use("/api/stripe", stripeRoutes); // ✅ AGREGADO: Rutas de Stripe
 
 // ============ RUTAS DE ROOT (solo usuarios root) ============
 app.use('/api/root', authMiddleware, isRoot, rootRoutes);

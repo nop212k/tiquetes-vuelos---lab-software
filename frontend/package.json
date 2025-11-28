@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
+    "@stripe/react-stripe-js": "^5.4.1",
+    "@stripe/stripe-js": "^8.5.3",
     "axios": "^1.12.2",
     "date-fns": "^4.1.0",
     "moment-timezone": "^0.6.0",
