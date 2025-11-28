@@ -3,6 +3,11 @@ import Navbar from "../components/root/Navbarroot";
 
 const API_URL = "http://localhost:8000/api";
 
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
 interface Usuario {
   id: number;
   nombres: string;
@@ -79,7 +84,11 @@ const Root = () => {
   // Cargar admins
   const fetchUsers = async () => {
     try {
-      const res = await fetch(`${API_URL}/root/users`);
+      const res = await fetch(`${API_URL}/root/users`, {
+        headers: {
+          ...getAuthHeaders(),
+        },
+      });
       const data = await res.json();
       setAdmins(data.admins || []);
     } catch (err) {
@@ -194,6 +203,9 @@ const Root = () => {
 
       const res = await fetch(`${API_URL}/root/users/${editingUser.id}`, {
         method: "PUT",
+        headers: {
+          ...getAuthHeaders(),
+        },
         body: formDataToSend
       });
 
@@ -216,7 +228,10 @@ const Root = () => {
     if (window.confirm("¿Estás seguro de eliminar este usuario?")) {
       try {
         const res = await fetch(`${API_URL}/root/users/${id}`, { 
-          method: "DELETE" 
+          method: "DELETE",
+          headers: {
+            ...getAuthHeaders(),
+          },
         });
         
         if (!res.ok) {

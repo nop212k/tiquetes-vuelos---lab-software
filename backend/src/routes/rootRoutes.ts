@@ -4,15 +4,15 @@ import { getRootUsers, promoteToAdmin, demoteToClient, deleteRootUser } from "..
 const router = Router();
 
 // Listar clientes y admins
-router.get("/root/users", getRootUsers);
+router.get("/users", getRootUsers);
 
 // Promover cliente a admin
-router.post("/root/users/:id/make-admin", promoteToAdmin);
+router.post("/users/:id/make-admin", promoteToAdmin);
 
 // Degradar admin a cliente
-router.post("/root/users/:id/make-client", demoteToClient);
+router.post("/users/:id/make-client", demoteToClient);
 
 // Eliminar usuario
-router.delete("/root/users/:id", deleteRootUser);
+router.delete("/users/:id", deleteRootUser);
 
 export default router;

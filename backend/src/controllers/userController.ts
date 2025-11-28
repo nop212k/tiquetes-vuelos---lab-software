@@ -61,7 +61,12 @@ export const createUser = async (req: Request, res: Response) => {
     newUser.correo = correo;
     newUser.usuario = usuario;
     newUser.contrasena = await bcrypt.hash(contrasena, 10);
-    newUser.tipo = (req.body.tipo === "admin") ? "admin" : "cliente";
+    const requestedTipo = String(req.body.tipo || "cliente").trim().toLowerCase();
+    newUser.tipo = requestedTipo === "root"
+      ? "root"
+      : requestedTipo === "admin"
+        ? "admin"
+        : "cliente";
 
     await userRepository.save(newUser);
 
