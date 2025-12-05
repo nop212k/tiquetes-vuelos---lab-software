@@ -1,9 +1,10 @@
+import type { ChangeEvent, FormEvent } from "react";
 import { useEffect, useState } from "react";
 import Navbar from "../components/root/Navbarroot";
 
 const API_URL = "http://localhost:8000/api";
 
-const getAuthHeaders = () => {
+const getAuthHeaders = (): HeadersInit => {
   const token = localStorage.getItem("token");
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
@@ -69,7 +70,6 @@ const Root = () => {
   const [ciudades, setCiudades] = useState<Ciudad[]>([]);
   const [loadingCiudades, setLoadingCiudades] = useState(false);
   const [query, setQuery] = useState("");
-  const [selectedCiudad, setSelectedCiudad] = useState<Ciudad | null>(null);
 
   // Estados para foto
   const [fotoPreview, setFotoPreview] = useState<string | null>(null);
@@ -85,9 +85,7 @@ const Root = () => {
   const fetchUsers = async () => {
     try {
       const res = await fetch(`${API_URL}/root/users`, {
-        headers: {
-          ...getAuthHeaders(),
-        },
+        headers: getAuthHeaders(),
       });
       const data = await res.json();
       setAdmins(data.admins || []);
@@ -126,7 +124,6 @@ const Root = () => {
   const handleSelectCiudad = (c: Ciudad) => {
     setFormData(prev => ({ ...prev, lugarNacimiento: c.nombre }));
     setQuery(c.nombre);
-    setSelectedCiudad(c);
     setCiudades([]);
   };
 
@@ -160,11 +157,10 @@ const Root = () => {
     setFotoFile(null);
     setFotoPreview(null);
     setQuery("");
-    setSelectedCiudad(null);
   };
 
   // Manejar cambios en el formulario
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -184,7 +180,7 @@ const Root = () => {
   }, [fotoFile, editingUser]);
 
   // Guardar cambios
-  const handleSave = async (e: React.FormEvent) => {
+  const handleSave = async (e: FormEvent) => {
     e.preventDefault();
     if (!editingUser) return;
 
@@ -203,9 +199,7 @@ const Root = () => {
 
       const res = await fetch(`${API_URL}/root/users/${editingUser.id}`, {
         method: "PUT",
-        headers: {
-          ...getAuthHeaders(),
-        },
+        headers: getAuthHeaders(),
         body: formDataToSend
       });
 
@@ -229,9 +223,7 @@ const Root = () => {
       try {
         const res = await fetch(`${API_URL}/root/users/${id}`, { 
           method: "DELETE",
-          headers: {
-            ...getAuthHeaders(),
-          },
+          headers: getAuthHeaders(),
         });
         
         if (!res.ok) {

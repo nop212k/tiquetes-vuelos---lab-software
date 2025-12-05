@@ -1,5 +1,6 @@
 // src/pages/ForoCliente.tsx
-import React, { useEffect, useState, useRef } from "react";
+import type { FC } from "react";
+import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
@@ -24,10 +25,10 @@ interface Chat {
 }
 
 interface ForoClienteProps {
-  setTieneNoLeidos: (val: boolean) => void;
+  setTieneNoLeidos?: (val: boolean) => void;
 }
 
-const ForoCliente: React.FC<ForoClienteProps> = ({ setTieneNoLeidos }) => {
+const ForoCliente: FC<ForoClienteProps> = ({ setTieneNoLeidos }) => {
   const [chat, setChat] = useState<Chat | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
@@ -81,7 +82,7 @@ const ForoCliente: React.FC<ForoClienteProps> = ({ setTieneNoLeidos }) => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      setTieneNoLeidos(false); // quitar puntito verde
+      setTieneNoLeidos?.(false); // quitar puntito verde
     } catch (err) {
       console.error("Error marcando mensajes como leídos:", err);
     }
@@ -95,7 +96,7 @@ const ForoCliente: React.FC<ForoClienteProps> = ({ setTieneNoLeidos }) => {
     if (!newMessage.trim() || !chat) return;
 
     try {
-      const res = await axios.post(
+      await axios.post(
         `${API_BASE}/api/chats/messages`,
         { message: newMessage },
         { headers: { Authorization: `Bearer ${token}` } }

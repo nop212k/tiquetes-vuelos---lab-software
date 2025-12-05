@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { useNavigate,useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
@@ -29,7 +29,6 @@ const ForoAdminLista: React.FC = () => {
   const navigate = useNavigate();
   const [chats, setChats] = useState<Chat[]>([]);
   const token = localStorage.getItem("token");
-  const location = useLocation();
 
 
   useEffect(() => {

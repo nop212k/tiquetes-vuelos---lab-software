@@ -1,5 +1,5 @@
 // frontend/src/components/RegisterForm.tsx
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -79,8 +79,6 @@ type FormData = z.infer<typeof registerSchema>;
 const today = new Date();
 const maxDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
 const minDate = new Date(today.getFullYear() - 100, today.getMonth(), today.getDate());
-const formatDate = (d: Date) => d.toISOString().split("T")[0];
-
 //=======================INTERFAZ===========================
 interface RegisterFormProps {
   isRoot?: boolean;

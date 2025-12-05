@@ -1,5 +1,6 @@
 // frontend/src/components/CheckoutForm.tsx
-import React, { useState } from "react";
+import type { FC, FormEvent } from "react";
+import { useState } from "react";
 import {
   useStripe,
   useElements,
@@ -12,7 +13,6 @@ import { toast } from "react-toastify";
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
 interface CheckoutFormProps {
-  clientSecret: string;
   checkoutData: {
     vueloId: number;
     numeroPasajeros: number;
@@ -20,7 +20,7 @@ interface CheckoutFormProps {
   };
 }
 
-const CheckoutForm: React.FC<CheckoutFormProps> = ({ clientSecret, checkoutData }) => {
+const CheckoutForm: FC<CheckoutFormProps> = ({ checkoutData }) => {
   const stripe = useStripe();
   const elements = useElements();
   const navigate = useNavigate();
@@ -28,7 +28,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ clientSecret, checkoutData 
   const [processing, setProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
     if (!stripe || !elements) {

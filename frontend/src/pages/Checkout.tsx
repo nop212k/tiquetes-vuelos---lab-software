@@ -148,10 +148,7 @@ const Checkout: React.FC = () => {
 
             {!loading && !error && clientSecret && (
               <Elements stripe={stripePromise} options={{ clientSecret }}>
-                <CheckoutForm
-                  clientSecret={clientSecret}
-                  checkoutData={checkoutData}
-                />
+                <CheckoutForm checkoutData={checkoutData} />
               </Elements>
             )}
           </div>

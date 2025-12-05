@@ -19,7 +19,6 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
   const verifyAuth = useCallback(async () => {
     // Verificar si hay un token en localStorage
     const token = localStorage.getItem('token');
-    const userStr = localStorage.getItem('user');
     
     if (!token) {
       console.log('No hay token en localStorage');
